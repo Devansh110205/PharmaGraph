@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PharmaGraph-CDS | 4. Decision Support & 5-Hop Mechanism</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'], mono: ['JetBrains Mono', 'monospace'] },
+                    colors: { lab: { 50: '#f0f7ff', 100: '#e0effe', 600: '#0284c7', 700: '#0369a1', 800: '#075985', 900: '#0c4a6e', 950: '#082f49' } }
+                }
+            }
+        }
+    </script>
+    <style>
+        @keyframes dash {
+            to { stroke-dashoffset: -40; }
+        }
+        .edge-animated {
+            stroke-dasharray: 6, 4;
+            animation: dash 1.5s linear infinite;
+        }
+    </style>
+</head>
+<body class="bg-slate-100 text-slate-800 antialiased min-h-screen flex flex-col font-sans">
+
+    <!-- Common Navigation Header (Page 4 Active) -->
+    <header id="common-portal-header"></header>
+
+    <main class="flex-1 max-w-[1440px] w-full mx-auto px-4 sm:px-6 py-6">
+        <div class="mb-5 flex flex-wrap items-center justify-between gap-3">
+            <div>
+                <span class="text-xs font-mono font-bold uppercase tracking-wider text-lab-800 bg-lab-100 px-2.5 py-0.5 rounded">Step 4 of 5</span>
+                <h2 class="text-xl font-extrabold text-slate-900 mt-1">Clinical Decision Support & Multi-Hop Pathway Tracing</h2>
+                <p class="text-xs text-slate-500">Ranked CPIC/DPWG clinical alerts, verified 5-hop biological mechanisms, and medico-legal override audit.</p>
+            </div>
+            <a href="consultation.html" class="inline-flex items-center gap-2 bg-lab-800 hover:bg-lab-900 text-white px-4 py-2 rounded-lg text-xs font-semibold shadow transition">
+                Proceed to Consultation & EHR &rarr;
+            </a>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+            <!-- Left Column: Ranked Alerts (6 Cols) -->
+            <div class="lg:col-span-6 space-y-5">
+                <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
+                    <div class="px-5 py-4 bg-slate-900 text-white flex items-center justify-between">
+                        <div>
+                            <h3 class="font-bold text-sm">Ranked Pharmacogenomic Alerts</h3>
+                            <p class="text-[11px] text-slate-400">Prioritized by severity: Critical &rarr; Moderate &rarr; Standard</p>
+                        </div>
+                        <span class="font-mono text-[10px] bg-slate-800 text-emerald-400 px-2 py-0.5 rounded">100% Provenance</span>
+                    </div>
+
+                    <div id="cds-alerts-container" class="p-5 space-y-4"></div>
+                </div>
+
+                <!-- Documented Clinical Override Audit Trail & Medico-Legal Log -->
+                <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
+                    <div class="px-5 py-3.5 bg-slate-900 text-white flex items-center justify-between">
+                        <div class="flex items-center gap-2">
+                            <span class="w-6 h-6 rounded bg-rose-700 text-white flex items-center justify-center text-xs font-bold">⚖️</span>
+                            <div>
+                                <h3 class="font-bold text-sm">Clinical Override Audit Trail & Medico-Legal Log</h3>
+                                <p class="text-[11px] text-slate-400">Hospital quality assurance & physician justification documentation</p>
+                            </div>
+                        </div>
+                        <span id="audit-log-count-badge" class="font-mono text-[10px] bg-slate-800 text-rose-300 px-2.5 py-1 rounded font-bold">0 Overrides Active</span>
+                    </div>
+
+                    <div id="clinical-audit-trail-container" class="p-5 space-y-3"></div>
+                </div>
+            </div>
+
+            <!-- Right Column: 5-Hop Mechanism SVG & Inspector (6 Cols) -->
+            <div class="lg:col-span-6 space-y-5">
+                <div class="bg-slate-900 rounded-2xl border border-slate-800 overflow-hidden shadow-xl text-white flex flex-col">
+                    <div class="px-5 py-4 border-b border-slate-800 flex items-center justify-between">
+                        <div>
+                            <h3 class="font-bold text-sm text-slate-100">5-Hop Biological Mechanism Graph</h3>
+                            <p class="text-[11px] text-slate-400">Traced path: <span id="trace-drug-label" class="text-sky-300 font-semibold font-mono"></span></p>
+                        </div>
+                        <span id="trace-path-id-badge" class="font-mono text-[10px] px-2 py-0.5 rounded bg-slate-800 text-sky-400 border border-slate-700"></span>
+                    </div>
+
+                    <div class="p-4 bg-slate-950 flex items-center justify-center overflow-x-auto">
+                        <svg id="pathway-svg" viewBox="0 0 920 265" class="w-full h-auto min-w-[720px] select-none"></svg>
+                    </div>
+
+                    <!-- Interactive Node Inspector Panel -->
+                    <div class="p-4 bg-slate-900/90 border-t border-slate-800 text-xs space-y-1.5">
+                        <div class="flex items-center justify-between">
+                            <span class="text-[10px] font-mono text-slate-400">Interactive Pathway Node Inspector</span>
+                            <span id="node-inspector-badge" class="font-mono text-[10px] px-2 py-0.5 rounded bg-lab-900 text-sky-300 font-bold">CLICK A NODE</span>
+                        </div>
+                        <p id="node-inspector-text" class="text-slate-200 text-xs leading-relaxed">
+                            Click any biological node or relationship arrow in the graph above to inspect underlying CPIC evidence, pharmacokinetic exposure metrics, and clinical citations.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Guidance Safety Box -->
+                <div class="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm text-xs text-slate-600 space-y-1">
+                    <strong class="font-bold text-slate-900 block">Guideline Citation Reference:</strong>
+                    <p class="text-[11px]">
+                        Every recommendation is anchored in peer-reviewed CPIC (Clinical Pharmacogenetics Implementation Consortium) guidelines and DPWG (Dutch Pharmacogenetics Working Group) annotations with verified PubMed IDs.
+                    </p>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Clinical Override Justification Modal -->
+    <div id="clinical-override-modal" class="fixed inset-0 z-50 hidden bg-slate-900/75 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-lg w-full border border-slate-200 shadow-2xl overflow-hidden flex flex-col">
+            <div class="px-6 py-4 bg-rose-950 text-white flex items-center justify-between">
+                <div>
+                    <span class="text-[10px] font-mono uppercase bg-rose-500/20 text-rose-300 border border-rose-400/30 px-2 py-0.5 rounded">Audit Trail Logging</span>
+                    <h3 class="text-base font-bold mt-1">Clinical Decision Override & Justification</h3>
+                </div>
+                <button onclick="closeClinicalOverrideModal()" class="text-slate-400 hover:text-white text-xl font-bold">&times;</button>
+            </div>
+            <div class="p-6 space-y-4 text-xs">
+                <div class="p-3 bg-rose-50 border border-rose-200 rounded-lg text-rose-900">
+                    Documenting clinical override for <strong id="override-drug-title" class="underline"></strong> [<span id="override-edge-badge" class="font-mono"></span>].
+                </div>
+                <div class="space-y-1">
+                    <label class="block font-bold text-slate-700">Clinical Override Justification:</label>
+                    <select id="override-reason-select" class="w-full rounded-lg border border-slate-300 bg-white p-2 text-xs focus:ring-2 focus:ring-rose-600 focus:outline-none">
+                        <optgroup label="Tolerability & Prior Therapeutic History">
+                            <option value="Patient previously tolerated target medication without adverse events or toxicity">Patient previously tolerated target medication without adverse events or toxicity</option>
+                            <option value="Documented chronic therapeutic stability on current regimen without myopathy, bleeding, or rash">Documented chronic therapeutic stability on current regimen without myopathy, bleeding, or rash</option>
+                            <option value="Prior therapeutic drug monitoring (TDM) within normal reference range on this dose">Prior therapeutic drug monitoring (TDM) within normal reference range on this dose</option>
+                        </optgroup>
+                        <optgroup label="Specialist & Multidisciplinary Consensus">
+                            <option value="Cardiology / Interventional mandate: Acute stent thrombosis risk exceeds PGx bleeding risk">Cardiology / Interventional mandate: Acute stent thrombosis risk exceeds PGx bleeding risk</option>
+                            <option value="Oncology tumor board consensus: Oncologic survival benefit outweighs myelosuppression risk">Oncology tumor board consensus: Oncologic survival benefit outweighs myelosuppression risk</option>
+                            <option value="Neurology / Epileptology sign-off: Uncontrolled refractory seizures mandate target agent">Neurology / Epileptology sign-off: Uncontrolled refractory seizures mandate target agent</option>
+                            <option value="Infectious disease consultation approval: Microbial resistance profile restricts to target agent">Infectious disease consultation approval: Microbial resistance profile restricts to target agent</option>
+                            <option value="Clinical Pharmacogenomics Specialist approved personalized mitigation protocol">Clinical Pharmacogenomics Specialist approved personalized mitigation protocol</option>
+                        </optgroup>
+                        <optgroup label="Benefit-Risk & Acute Medical Urgency">
+                            <option value="Acute medical emergency / critical care resuscitation warrants immediate initiation">Acute medical emergency / critical care resuscitation warrants immediate initiation</option>
+                            <option value="Calculated clinical benefit overwhelmingly outweighs theoretical pharmacogenomic ADR risk">Calculated clinical benefit overwhelmingly outweighs theoretical pharmacogenomic ADR risk</option>
+                            <option value="Palliative / hospice goal of care: Symptom control prioritized with enhanced comfort monitoring">Palliative / hospice goal of care: Symptom control prioritized with enhanced comfort monitoring</option>
+                        </optgroup>
+                        <optgroup label="Comorbidities & Alternative Contraindications">
+                            <option value="Guideline-recommended alternatives strictly contraindicated due to severe renal impairment (CrCl < 30 mL/min)">Guideline-recommended alternatives strictly contraindicated due to severe renal impairment (CrCl < 30 mL/min)</option>
+                            <option value="Guideline-recommended alternatives contraindicated due to documented anaphylaxis or severe drug allergy">Guideline-recommended alternatives contraindicated due to documented anaphylaxis or severe drug allergy</option>
+                            <option value="Documented drug-drug interaction contraindicates all alternative agents">Documented drug-drug interaction contraindicates all alternative agents</option>
+                            <option value="Severe hepatic dysfunction precludes alternative hepatic-cleared medications">Severe hepatic dysfunction precludes alternative hepatic-cleared medications</option>
+                        </optgroup>
+                        <optgroup label="Genotyping & Diagnostic Context Discrepancies">
+                            <option value="Genotype assay discrepancy suspected; confirmatory repeat testing or Sanger sequencing ordered">Genotype assay discrepancy suspected; confirmatory repeat testing or Sanger sequencing ordered</option>
+                            <option value="Phenotypic discrepancy: Patient demonstrates normal clinical clearance contrary to diplotype call">Phenotypic discrepancy: Patient demonstrates normal clinical clearance contrary to diplotype call</option>
+                            <option value="Planned aggressive therapeutic drug monitoring (TDM) with serial pharmacokinetic serum assays">Planned aggressive therapeutic drug monitoring (TDM) with serial pharmacokinetic serum assays</option>
+                        </optgroup>
+                    </select>
+                </div>
+                <div class="space-y-1">
+                    <label class="block font-bold text-slate-700">Attending Physician / Pharmacist Audit Notes:</label>
+                    <textarea id="override-notes" rows="3" placeholder="Enter clinical rationale for hospital quality audit..." class="w-full rounded-lg border border-slate-300 p-2 text-xs"></textarea>
+                </div>
+            </div>
+            <div class="px-6 py-3 bg-slate-100 border-t border-slate-200 flex items-center justify-between">
+                <span class="text-[11px] text-slate-500">Stored in EMR session audit log</span>
+                <div class="flex gap-2">
+                    <button onclick="confirmClinicalOverride()" class="bg-rose-700 hover:bg-rose-800 text-white px-4 py-1.5 rounded-lg text-xs font-semibold transition">Confirm Override</button>
+                    <button onclick="closeClinicalOverrideModal()" class="bg-slate-200 hover:bg-slate-300 text-slate-800 px-4 py-1.5 rounded-lg text-xs font-semibold transition">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="shared.js"></script>
+    <script>
+        let activeTraceNodes = [];
+        let activeTraceEval = null;
+        let activeOverrideTarget = null;
+
+        window.onload = function() {
+            renderCommonHeader(4);
+            renderRankedAlerts();
+            renderClinicalAuditTrail();
+            const evaluations = evaluateOrderedRegimen();
+            const activeEval = evaluations.find(e => e.drugKey === portalState.focusedDrugKey) || evaluations[0];
+            if (activeEval) {
+                portalState.focusedDrugKey = activeEval.drugKey;
+                renderMultiHopPathwayTrace(activeEval);
+            }
+        };
+
+        function renderRankedAlerts() {
+            const container = document.getElementById('cds-alerts-container');
+            if (!container) return;
+            container.innerHTML = '';
+            const evaluations = evaluateOrderedRegimen();
+
+            evaluations.forEach((ev, index) => {
+                const isFocused = ev.drugKey === portalState.focusedDrugKey;
+                let cardStyle = "border-emerald-200 bg-emerald-50/25";
+                let headerBadge = "bg-emerald-700 text-white";
+                let severityText = "SAFE / STANDARD THERAPY";
+
+                if (ev.severity === "CRITICAL") {
+                    cardStyle = "border-rose-300 bg-rose-50/35";
+                    headerBadge = "bg-rose-700 text-white";
+                    severityText = "ACTION REQUIRED · CONTRAINDICATED";
+                } else if (ev.severity === "MODERATE") {
+                    cardStyle = "border-amber-300 bg-amber-50/35";
+                    headerBadge = "bg-amber-600 text-white";
+                    severityText = "MODERATE RISK · DOSE ADJUST";
+                }
+
+                let altButtonsHtml = '';
+                if (ev.severity !== "STANDARD" && ev.alternatives && ev.alternatives.length > 0) {
+                    const safeAlts = ev.alternatives.map(k => FORMULARY[k]).filter(Boolean);
+                    if (safeAlts.length > 0) {
+                        altButtonsHtml = `
+                            <div class="mt-2.5 pt-2.5 border-t border-slate-200 flex flex-wrap items-center justify-between gap-2">
+                                <span class="text-[11px] font-semibold text-emerald-900">Verified Alternatives:</span>
+                                <div class="flex gap-1.5">
+                                    ${safeAlts.map(alt => `<button onclick="replaceDrugWithAlternative('${ev.drugKey}', '${alt.name.toLowerCase()}', event)" class="bg-emerald-700 hover:bg-emerald-800 text-white px-2.5 py-1 rounded text-[11px] font-semibold transition">⇄ Switch to ${alt.name}</button>`).join('')}
+                                </div>
+                            </div>
+                        `;
+                    }
+                }
+
+                let overrideHtml = '';
+                const activeOverride = portalState.overrides && portalState.overrides[ev.drugName];
+                if (activeOverride) {
+                    overrideHtml = `<span class="bg-emerald-100 text-emerald-800 border border-emerald-300 text-[10px] font-mono px-2 py-0.5 rounded font-bold">✓ OVERRIDDEN: ${activeOverride.reason}</span>`;
+                } else if (ev.severity !== "STANDARD") {
+                    overrideHtml = `<button onclick="openClinicalOverrideModal('${ev.drugName}', '${ev.edgeId}', event)" class="bg-rose-100 hover:bg-rose-200 text-rose-800 border border-rose-300 px-2 py-0.5 rounded text-[10px] font-semibold transition">⚠️ Document Override</button>`;
+                }
+
+                const card = document.createElement('div');
+                card.className = `rounded-xl border p-4 transition cursor-pointer ${cardStyle} ${isFocused ? 'ring-2 ring-lab-700 shadow-md' : ''}`;
+                card.onclick = () => {
+                    portalState.focusedDrugKey = ev.drugKey;
+                    saveStateToStorage();
+                    renderRankedAlerts();
+                    renderMultiHopPathwayTrace(ev);
+                };
+                card.innerHTML = `
+                    <div class="flex flex-wrap items-center justify-between gap-2 mb-2.5">
+                        <div class="flex items-center gap-2">
+                            <span class="text-[10px] font-mono font-bold px-2 py-0.5 rounded ${headerBadge}">#${index + 1} · ${severityText}</span>
+                            <h3 class="text-sm font-extrabold text-slate-900">${ev.drugName}</h3>
+                            <span class="text-xs font-mono text-slate-500">(${ev.rxnorm})</span>
+                            <span class="text-[11px] font-mono bg-white border px-2 py-0.5 rounded text-slate-700">${ev.gene} ${ev.diplotype} · ${ev.phenotype}</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            ${overrideHtml}
+                            <span class="text-[10px] font-mono font-semibold bg-slate-900 text-sky-300 px-2 py-0.5 rounded">${ev.evidenceBadge}</span>
+                        </div>
+                    </div>
+                    <div class="bg-white rounded-lg p-3 border border-slate-200 mb-3">
+                        <div class="text-xs font-bold text-slate-900">${ev.summaryAction}</div>
+                        ${altButtonsHtml}
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-[11px]">
+                        <div class="bg-white p-2.5 rounded-lg border"><strong class="block mb-0.5 text-slate-800">CPIC Guideline:</strong><p class="text-slate-600">${ev.cpicText}</p></div>
+                        <div class="bg-white p-2.5 rounded-lg border"><strong class="block mb-0.5 text-slate-800">DPWG Guideline:</strong><p class="text-slate-600">${ev.dpwgText}</p></div>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function replaceDrugWithAlternative(oldKey, newName, event) {
+            if (event) event.stopPropagation();
+            const newKey = Object.keys(FORMULARY).find(k => FORMULARY[k].name.toLowerCase() === newName.toLowerCase());
+            if (!newKey) return;
+
+            const idx = portalState.orderedDrugs.indexOf(oldKey);
+            if (idx >= 0) portalState.orderedDrugs.splice(idx, 1);
+            if (!portalState.orderedDrugs.includes(newKey)) portalState.orderedDrugs.push(newKey);
+            portalState.focusedDrugKey = newKey;
+            saveStateToStorage();
+            renderCommonHeader(4);
+            renderRankedAlerts();
+
+            const evaluations = evaluateOrderedRegimen();
+            const activeEval = evaluations.find(e => e.drugKey === newKey) || evaluations[0];
+            if (activeEval) renderMultiHopPathwayTrace(activeEval);
+        }
+
+        function renderMultiHopPathwayTrace(ev) {
+            const labelEl = document.getElementById('trace-drug-label');
+            const badgeEl = document.getElementById('trace-path-id-badge');
+            if (labelEl) labelEl.textContent = `${ev.drugName} (${ev.rxnorm})`;
+            if (badgeEl) badgeEl.textContent = `Edge: ${ev.edgeId}`;
+            const svg = document.getElementById('pathway-svg');
+            if (!svg) return;
+
+            const strokeColor = ev.severity === "CRITICAL" ? "#f43f5e" : (ev.severity === "MODERATE" ? "#f59e0b" : "#10b981");
+            const clip = (str, len = 22) => (str && str.length > len ? str.slice(0, len - 1) + "…" : str);
+
+            const nodes = [
+                { x: 15, y: 78, w: 155, h: 98, hop: "HOP 1 · GENOTYPE", title: `${ev.gene} ${ev.diplotype}`, sub: `${ev.hgnc} · PharmVar v6.1`, border: "#38bdf8", inspectTitle: `GENE & DIPLOTYPE (${ev.gene})`, inspectText: `Specimen carries ${ev.gene} diplotype ${ev.diplotype} called via PharmCAT v2.15.` },
+                { x: 200, y: 78, w: 160, h: 98, hop: "HOP 2 · PHENOTYPE", title: clip(ev.phenotype, 20), sub: clip(ev.kineticsNode, 22), border: "#2dd4bf", inspectTitle: `ENZYME PHENOTYPE`, inspectText: `${ev.gene} ${ev.diplotype} resolves to ${ev.phenotype}: ${ev.kineticsNode}.` },
+                { x: 390, y: 78, w: 160, h: 98, hop: "HOP 3 · EXPOSURE", title: clip(ev.drugName, 20), sub: clip(ev.exposureNode, 22), border: "#a78bfa", inspectTitle: `PK EXPOSURE (${ev.rxnorm})`, inspectText: `Metabolic state causes: ${ev.exposureNode} for ${ev.drugName}.` },
+                { x: 580, y: 78, w: 155, h: 98, hop: "HOP 4 · RISK", title: ev.severity, sub: clip(ev.adrNode, 22), border: strokeColor, inspectTitle: `CLINICAL ADR RISK`, inspectText: `Downstream clinical reaction: ${ev.adrNode} (${ev.severity}).` },
+                { x: 760, y: 78, w: 145, h: 98, hop: "HOP 5 · ACTION", title: clip(ev.evidenceBadge, 18), sub: clip(ev.prescribingNode, 20), border: strokeColor, inspectTitle: `GUIDELINE ACTION (${ev.edgeId})`, inspectText: `${ev.summaryAction} [Verified CPIC/DPWG]` }
+            ];
+
+            activeTraceNodes = nodes;
+            activeTraceEval = ev;
+
+            let svgHtml = `<defs><marker id="arrow-head" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 1 L 10 5 L 0 9 z" fill="${strokeColor}"/></marker></defs>`;
+            for (let i = 0; i < nodes.length - 1; i++) {
+                svgHtml += `<line x1="${nodes[i].x + nodes[i].w}" y1="${nodes[i].y + 49}" x2="${nodes[i + 1].x}" y2="${nodes[i + 1].y + 49}" stroke="#334155" stroke-width="3"/><line x1="${nodes[i].x + nodes[i].w}" y1="${nodes[i].y + 49}" x2="${nodes[i + 1].x}" y2="${nodes[i + 1].y + 49}" stroke="${strokeColor}" stroke-width="2.5" class="edge-animated" marker-end="url(#arrow-head)"/>`;
+            }
+            nodes.forEach((n, idx) => {
+                svgHtml += `<g class="cursor-pointer" onclick="inspectNode(${idx})"><rect x="${n.x}" y="${n.y}" width="${n.w}" height="${n.h}" rx="12" fill="#0f172a" stroke="${n.border}" stroke-width="2"/><text x="${n.x + 12}" y="${n.y + 24}" fill="#94a3b8" font-size="9" font-family="JetBrains Mono">${n.hop}</text><text x="${n.x + 12}" y="${n.y + 52}" fill="#f8fafc" font-size="11.5" font-weight="700">${n.title}</text><text x="${n.x + 12}" y="${n.y + 74}" fill="#cbd5e1" font-size="10">${n.sub}</text></g>`;
+            });
+            svg.innerHTML = svgHtml;
+        }
+
+        function inspectNode(idx) {
+            const n = activeTraceNodes[idx];
+            if (n) {
+                const badgeEl = document.getElementById('node-inspector-badge');
+                const textEl = document.getElementById('node-inspector-text');
+                if (badgeEl) badgeEl.textContent = n.inspectTitle;
+                if (textEl) textEl.textContent = n.inspectText;
+            }
+        }
+
+        function openClinicalOverrideModal(drugName, edgeId, event) {
+            if (event) event.stopPropagation();
+            activeOverrideTarget = { drugName, edgeId };
+            const titleEl = document.getElementById('override-drug-title');
+            const badgeEl = document.getElementById('override-edge-badge');
+            if (titleEl) titleEl.textContent = drugName;
+            if (badgeEl) badgeEl.textContent = edgeId;
+            document.getElementById('clinical-override-modal')?.classList.remove('hidden');
+        }
+
+        function closeClinicalOverrideModal() {
+            document.getElementById('clinical-override-modal')?.classList.add('hidden');
+            activeOverrideTarget = null;
+        }
+
+        function confirmClinicalOverride() {
+            if (!activeOverrideTarget) return;
+            const selectEl = document.getElementById('override-reason-select');
+            const reason = selectEl?.value || 'Clinical discretion';
+            const optgroup = selectEl?.selectedOptions[0]?.parentElement?.label || 'Clinical Judgement';
+            const notes = document.getElementById('override-notes')?.value || '';
+            const nowStr = new Date().toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' });
+
+            portalState.overrides = portalState.overrides || {};
+            portalState.overrides[activeOverrideTarget.drugName] = {
+                reason: reason,
+                category: optgroup,
+                notes: notes,
+                edgeId: activeOverrideTarget.edgeId,
+                timestamp: nowStr,
+                physician: portalState.accessionData.physician
+            };
+            saveStateToStorage();
+            closeClinicalOverrideModal();
+            renderRankedAlerts();
+            renderClinicalAuditTrail();
+        }
+
+        function revokeClinicalOverride(drugName, event) {
+            if (event) event.stopPropagation();
+            if (portalState.overrides && portalState.overrides[drugName]) {
+                delete portalState.overrides[drugName];
+                saveStateToStorage();
+                renderRankedAlerts();
+                renderClinicalAuditTrail();
+            }
+        }
+
+        function renderClinicalAuditTrail() {
+            const container = document.getElementById('clinical-audit-trail-container');
+            const badgeEl = document.getElementById('audit-log-count-badge');
+            if (!container) return;
+            const overrides = portalState.overrides || {};
+            const overrideKeys = Object.keys(overrides);
+
+            if (badgeEl) {
+                badgeEl.textContent = `${overrideKeys.length} Override(s) Documented`;
+                badgeEl.className = overrideKeys.length > 0 
+                    ? "font-mono text-[10px] bg-rose-950 text-rose-300 border border-rose-800 px-2.5 py-1 rounded font-bold" 
+                    : "font-mono text-[10px] bg-slate-800 text-slate-400 px-2.5 py-1 rounded font-bold";
+            }
+
+            if (overrideKeys.length === 0) {
+                container.innerHTML = `
+                    <div class="p-4 rounded-xl border border-dashed border-slate-200 bg-slate-50 text-center text-xs text-slate-500">
+                        <span class="block text-base mb-1">⚖️</span>
+                        <strong class="text-slate-700 block">No Active Clinical Overrides Documented</strong>
+                        <p class="text-[11px] text-slate-400 mt-0.5">All prescribed medications strictly adhere to standard CPIC & DPWG recommendations.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = `
+                <div class="space-y-3">
+                    ${overrideKeys.map(dName => {
+                        const item = overrides[dName];
+                        return `
+                            <div class="p-3.5 rounded-xl border border-rose-200 bg-rose-50/60 shadow-sm space-y-2 text-xs">
+                                <div class="flex flex-wrap items-center justify-between gap-2 border-b border-rose-200/60 pb-2">
+                                    <div class="flex items-center gap-2">
+                                        <span class="px-2 py-0.5 rounded bg-rose-700 text-white font-mono text-[10px] font-bold">OVERRIDE ACTIVE</span>
+                                        <h4 class="font-extrabold text-slate-900 text-xs">${dName}</h4>
+                                        <span class="font-mono text-[10px] text-slate-500 bg-white border px-1.5 py-0.2 rounded">${item.edgeId || 'CPIC-ADR'}</span>
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <span class="text-[11px] text-slate-500 font-mono">Logged: <strong class="text-slate-800 font-bold">${item.timestamp}</strong></span>
+                                        <button onclick="revokeClinicalOverride('${dName}', event)" class="text-[10px] font-semibold text-rose-700 hover:text-rose-900 bg-white border border-rose-300 hover:bg-rose-100 px-2 py-0.5 rounded transition">Revoke</button>
+                                    </div>
+                                </div>
+                                <div class="space-y-1">
+                                    <div class="text-[11px] text-slate-600"><strong>Category:</strong> <span class="bg-white px-2 py-0.5 rounded border border-slate-200 font-semibold text-slate-800">${item.category || 'Clinical Judgement'}</span></div>
+                                    <div class="text-[11.5px] text-slate-800"><strong>Justification:</strong> ${item.reason}</div>
+                                    ${item.notes ? `
+                                        <div class="p-2 bg-white rounded-lg border border-rose-100 text-[11px] text-slate-700 italic font-serif">
+                                            "${item.notes}"
+                                            <span class="block text-[10px] not-italic text-slate-400 font-sans mt-0.5">— ${item.physician || portalState.accessionData.physician} (Attending Physician)</span>
+                                        </div>
+                                    ` : ''}
+                                </div>
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+            `;
+        }
+    </script>
+</body>
+</html>

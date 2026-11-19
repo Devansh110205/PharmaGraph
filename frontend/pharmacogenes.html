@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PharmaGraph-CDS | 2. 8-Gene Assay & Ancestry Profile</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'], mono: ['JetBrains Mono', 'monospace'] },
+                    colors: { lab: { 50: '#f0f7ff', 100: '#e0effe', 600: '#0284c7', 700: '#0369a1', 800: '#075985', 900: '#0c4a6e', 950: '#082f49' } }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-slate-100 text-slate-800 antialiased min-h-screen flex flex-col font-sans">
+
+    <!-- Common Navigation Header (Page 2 Active) -->
+    <header id="common-portal-header"></header>
+
+    <main class="flex-1 max-w-[1440px] w-full mx-auto px-4 sm:px-6 py-6">
+        <div class="mb-5 flex flex-wrap items-center justify-between gap-3">
+            <div>
+                <span class="text-xs font-mono font-bold uppercase tracking-wider text-lab-800 bg-lab-100 px-2.5 py-0.5 rounded">Step 2 of 5</span>
+                <h2 class="text-xl font-extrabold text-slate-900 mt-1">8 Core Pharmacogenes Panel & Health Equity</h2>
+                <p class="text-xs text-slate-500">PharmCAT v2.15 diplotype-to-phenotype translation and ancestry-stratified allele distributions.</p>
+            </div>
+            <div class="flex items-center gap-2">
+                <button onclick="openPrintableReportModal()" class="inline-flex items-center gap-1.5 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 px-3 py-2 rounded-lg text-xs font-semibold shadow-sm transition">
+                    🖨️ View & Print Laboratory Report
+                </button>
+                <a href="prescribing.html" class="inline-flex items-center gap-2 bg-lab-800 hover:bg-lab-900 text-white px-4 py-2 rounded-lg text-xs font-semibold shadow transition">
+                    Proceed to e-Prescribing &rarr;
+                </a>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+            <!-- 8-Gene Assay Table (8 Cols) -->
+            <div class="lg:col-span-8 space-y-5">
+                <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
+                    <div class="px-5 py-4 bg-slate-900 text-white flex items-center justify-between">
+                        <div>
+                            <h3 class="font-bold text-sm">8-Pharmacogene Genotyping Panel</h3>
+                            <p class="text-[11px] text-slate-400">Standardized PharmVar v6.1 Star-Alleles & CPIC Activity Scores</p>
+                        </div>
+                        <span class="font-mono text-[10px] bg-slate-800 text-sky-300 border border-slate-700 px-2 py-0.5 rounded">All 8 Loci Phased</span>
+                    </div>
+
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-xs border-collapse">
+                            <thead>
+                                <tr class="bg-slate-50 border-b border-slate-200 text-slate-600 font-bold uppercase text-[10px] font-mono tracking-wider">
+                                    <th class="py-3 px-4">Pharmacogene</th>
+                                    <th class="py-3 px-4">Diplotype Call</th>
+                                    <th class="py-3 px-3">Activity Score</th>
+                                    <th class="py-3 px-4">Metabolizer / Function Phenotype</th>
+                                    <th class="py-3 px-4">Reference Source</th>
+                                </tr>
+                            </thead>
+                            <tbody id="assay-table-body" class="divide-y divide-slate-100"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Phenotype Clinical Legend -->
+                <div class="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm text-xs space-y-2">
+                    <strong class="font-bold text-slate-900 block">Phenotype Risk Classification Key:</strong>
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-[11px]">
+                        <div class="p-2 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-900 font-semibold flex items-center gap-1.5">
+                            <span class="w-2.5 h-2.5 rounded-full bg-emerald-600"></span> Normal Metabolizer
+                        </div>
+                        <div class="p-2 rounded-lg bg-amber-50 border border-amber-200 text-amber-900 font-semibold flex items-center gap-1.5">
+                            <span class="w-2.5 h-2.5 rounded-full bg-amber-600"></span> Intermediate Metabolizer
+                        </div>
+                        <div class="p-2 rounded-lg bg-rose-50 border border-rose-200 text-rose-900 font-semibold flex items-center gap-1.5">
+                            <span class="w-2.5 h-2.5 rounded-full bg-rose-600"></span> Poor / Ultrarapid Metabolizer
+                        </div>
+                        <div class="p-2 rounded-lg bg-purple-50 border border-purple-200 text-purple-900 font-semibold flex items-center gap-1.5">
+                            <span class="w-2.5 h-2.5 rounded-full bg-purple-600"></span> High-Risk HLA Allele Pos
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column: Ancestry & Health Equity (SDG 10) (4 Cols) -->
+            <div class="lg:col-span-4 space-y-5">
+                <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm space-y-4">
+                    <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                        <div>
+                            <h3 class="font-bold text-sm text-slate-900">Ancestry & Health Equity</h3>
+                            <span class="text-[10px] font-mono text-lab-800 font-bold bg-lab-100 px-1.5 py-0.5 rounded">UN SDG 10: Reduced Inequalities</span>
+                        </div>
+                    </div>
+
+                    <div class="space-y-2">
+                        <label class="block text-xs font-bold text-slate-700">Inspect Pharmacogene Frequencies:</label>
+                        <select id="ancestry-gene-select" onchange="renderAncestryPanel(this.value)" class="w-full rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 text-xs font-mono font-bold text-slate-800">
+                            <option value="CYP2C19">CYP2C19 (Clopidogrel, SSRIs)</option>
+                            <option value="CYP2D6">CYP2D6 (Codeine, Tramadol)</option>
+                            <option value="CYP2C9">CYP2C9 (Warfarin, Phenytoin)</option>
+                            <option value="VKORC1">VKORC1 (Warfarin Sensitivity)</option>
+                            <option value="SLCO1B1">SLCO1B1 (Statins)</option>
+                            <option value="DPYD">DPYD (Fluorouracil, Capecitabine)</option>
+                            <option value="HLA-B">HLA-B (Carbamazepine SJS)</option>
+                            <option value="TPMT">TPMT (Thiopurines)</option>
+                        </select>
+                    </div>
+
+                    <div id="ancestry-bars-container" class="space-y-3 pt-2"></div>
+
+                    <div id="ancestry-clinical-caveat" class="p-3.5 rounded-xl border border-amber-200 bg-amber-50 text-amber-950 text-xs leading-relaxed"></div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Modal: Formal Laboratory Diagnostic Report -->
+    <div id="lab-report-modal" class="fixed inset-0 z-50 hidden bg-slate-900/75 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-4xl w-full border border-slate-200 shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+            <div class="px-6 py-4 bg-slate-900 text-white flex items-center justify-between">
+                <div>
+                    <span class="text-[10px] font-mono uppercase bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 px-2 py-0.5 rounded font-bold">CLIA / CAP Simulated Molecular Report</span>
+                    <h3 class="text-base font-bold mt-1">PharmaGraph Molecular Diagnostics Laboratory</h3>
+                </div>
+                <button onclick="closePrintableReportModal()" class="text-slate-400 hover:text-white text-xl font-bold">&times;</button>
+            </div>
+            <div id="printable-report-sheet" class="p-8 overflow-y-auto flex-1 bg-white text-slate-900 space-y-6 text-xs font-mono"></div>
+            <div class="px-6 py-3 bg-slate-100 border-t border-slate-200 flex items-center justify-between">
+                <span class="text-xs text-slate-500">Official Clinical Diagnostic Requisition & Assay Report</span>
+                <div class="flex items-center gap-2">
+                    <button onclick="window.print()" class="bg-lab-800 hover:bg-lab-900 text-white px-4 py-1.5 rounded-lg text-xs font-semibold transition">🖨️ Print Report</button>
+                    <button onclick="closePrintableReportModal()" class="bg-slate-200 hover:bg-slate-300 text-slate-800 px-4 py-1.5 rounded-lg text-xs font-semibold transition">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="shared.js"></script>
+    <script>
+        window.onload = function() {
+            renderCommonHeader(2);
+            renderAssayTable();
+            renderAncestryPanel("CYP2C19");
+        };
+
+        function renderAssayTable() {
+            const tbody = document.getElementById('assay-table-body');
+            if (!tbody) return;
+            tbody.innerHTML = '';
+            const acc = portalState.accessionData;
+
+            Object.keys(GENE_PANEL).forEach(gene => {
+                const geneDef = GENE_PANEL[gene];
+                const dip = acc.diplotypes[gene] || "*1/*1";
+                const info = getAlleleInfo(gene, dip);
+
+                let pillColor = "bg-emerald-50 text-emerald-800 border-emerald-200";
+                if (info.pill === "rose") pillColor = "bg-rose-50 text-rose-800 border-rose-200 font-bold";
+                else if (info.pill === "amber") pillColor = "bg-amber-50 text-amber-800 border-amber-200 font-semibold";
+
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-50 transition border-b border-slate-100";
+                tr.innerHTML = `
+                    <td class="py-3 px-4 font-mono font-bold text-slate-900">
+                        <div>${gene}</div>
+                        <div class="text-[10px] text-slate-400 font-normal">${geneDef.hgnc}</div>
+                    </td>
+                    <td class="py-3 px-4 font-mono font-bold text-slate-800">${dip}</td>
+                    <td class="py-3 px-3 font-mono font-semibold text-slate-600">${info.score}</td>
+                    <td class="py-3 px-4">
+                        <span class="px-2.5 py-1 rounded-md border text-[11px] ${pillColor}">
+                            ${info.phenotype}
+                        </span>
+                        <div class="text-[10px] text-slate-500 mt-1">${info.variantNote}</div>
+                    </td>
+                    <td class="py-3 px-4 text-slate-500 text-[11px]">${geneDef.refDb}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function renderAncestryPanel(gene) {
+            const geneDef = GENE_PANEL[gene] || GENE_PANEL["CYP2C19"];
+            const barsContainer = document.getElementById('ancestry-bars-container');
+            const caveatEl = document.getElementById('ancestry-clinical-caveat');
+            const patientAncestry = portalState.accessionData.ancestry || '';
+
+            if (barsContainer) {
+                const entries = Object.entries(geneDef.ancestry || {});
+                barsContainer.innerHTML = entries.map(([group, stats]) => {
+                    const isPatientGroup = group.toLowerCase().includes(patientAncestry.toLowerCase()) || patientAncestry.toLowerCase().includes(group.toLowerCase());
+                    return `
+                        <div class="p-2.5 rounded-xl border transition ${isPatientGroup ? 'bg-lab-50 border-lab-300 ring-1 ring-lab-600' : 'bg-slate-50 border-slate-200'}">
+                            <div class="flex justify-between items-center text-xs mb-1">
+                                <span class="font-bold text-slate-900 flex items-center gap-1.5">
+                                    ${group}
+                                    ${isPatientGroup ? '<span class="px-1.5 py-0.2 rounded bg-lab-800 text-white text-[9px]">Active Patient</span>' : ''}
+                                </span>
+                                <span class="font-mono text-[11px] text-slate-600">Freq: <strong>${stats.freq}</strong></span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <div class="flex-1 h-2 bg-slate-200 rounded-full overflow-hidden">
+                                    <div class="bg-lab-700 h-full rounded-full" style="width: ${stats.cov}%"></div>
+                                </div>
+                                <span class="font-mono text-[10px] text-slate-500">${stats.cov}% cov</span>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+
+            if (caveatEl) {
+                caveatEl.innerHTML = `
+                    <strong class="font-bold text-amber-900 block mb-1">Population Equity Note (${gene}):</strong>
+                    ${geneDef.equityWarning || 'Standard CPIC panel guidance applies.'}
+                `;
+            }
+        }
+
+        function openPrintableReportModal() {
+            const acc = portalState.accessionData;
+            const sheet = document.getElementById('printable-report-sheet');
+            if (sheet) {
+                sheet.innerHTML = `
+                    <div class="border-b-2 border-slate-900 pb-3 flex justify-between items-start">
+                        <div>
+                            <h1 class="text-base font-extrabold uppercase">PharmaGraph Molecular Diagnostics Laboratory</h1>
+                            <p class="text-[11px] text-slate-600">Department of Pathology & Laboratory Medicine | CLIA ID: 99D20268841</p>
+                        </div>
+                        <div class="text-right text-[11px]">
+                            <div><strong>Accession:</strong> ${acc.accessionNo}</div>
+                            <div><strong>Date:</strong> ${acc.verifiedDate}</div>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4 py-2 border-b border-slate-200">
+                        <div><strong>Patient:</strong> ${acc.patientId}</div>
+                        <div><strong>Demographics:</strong> ${acc.ageSex}</div>
+                        <div><strong>Reported Ancestry:</strong> ${acc.ancestry}</div>
+                        <div><strong>Referring Clinician:</strong> ${acc.physician} (${acc.department})</div>
+                    </div>
+                    <div>
+                        <h3 class="font-bold uppercase text-xs mb-2">Targeted Pharmacogenomic 8-Gene Assay Summary</h3>
+                        <table class="w-full text-left border">
+                            <tr class="bg-slate-100 border-b"><th class="p-2">Gene</th><th class="p-2">Diplotype</th><th class="p-2">Score</th><th class="p-2">Phenotype Call</th><th class="p-2">Reference</th></tr>
+                            ${Object.keys(GENE_PANEL).map(g => {
+                                const dip = acc.diplotypes[g] || '*1/*1';
+                                const info = getAlleleInfo(g, dip);
+                                return `<tr class="border-b"><td class="p-2 font-bold">${g}</td><td class="p-2">${dip}</td><td class="p-2">${info.score}</td><td class="p-2 font-bold">${info.phenotype}</td><td class="p-2">${GENE_PANEL[g].refDb}</td></tr>`;
+                            }).join('')}
+                        </table>
+                    </div>
+                    <div class="text-[10px] text-slate-500 pt-3 border-t">
+                        Disclaimer: This report was generated using CPIC v2024 and PharmVar v6.1 guidelines. Clinical correlation is recommended.
+                    </div>
+                `;
+            }
+            document.getElementById('lab-report-modal')?.classList.remove('hidden');
+        }
+
+        function closePrintableReportModal() {
+            document.getElementById('lab-report-modal')?.classList.add('hidden');
+        }
+    </script>
+</body>
+</html>

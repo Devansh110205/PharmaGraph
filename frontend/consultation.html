@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PharmaGraph-CDS | 5. Consultation & EHR Export</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'], mono: ['JetBrains Mono', 'monospace'] },
+                    colors: { lab: { 50: '#f0f7ff', 100: '#e0effe', 600: '#0284c7', 700: '#0369a1', 800: '#075985', 900: '#0c4a6e', 950: '#082f49' } }
+                }
+            }
+        }
+    </script>
+    <style>
+        @media print {
+            /* Strictly print ONLY the styled clinical progress note */
+            html, body {
+                background: #ffffff !important;
+                color: #0f172a !important;
+                font-size: 10.5pt !important;
+                line-height: 1.4 !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                width: 100% !important;
+            }
+            body * {
+                visibility: hidden !important;
+            }
+            #soap-styled-container,
+            #soap-styled-container * {
+                visibility: visible !important;
+            }
+            #soap-styled-container {
+                position: absolute !important;
+                left: 0 !important;
+                top: 0 !important;
+                width: 100% !important;
+                max-width: 100% !important;
+                margin: 0 !important;
+                padding: 10px 0 !important;
+                max-height: none !important;
+                height: auto !important;
+                overflow: visible !important;
+                display: block !important;
+            }
+            .p-3.5, .p-4, .rounded-xl {
+                break-inside: avoid !important;
+                page-break-inside: avoid !important;
+            }
+        }
+    </style>
+</head>
+<body class="bg-slate-100 text-slate-800 antialiased min-h-screen flex flex-col font-sans">
+
+    <!-- Common Navigation Header (Page 5 Active) -->
+    <header id="common-portal-header"></header>
+
+    <main class="flex-1 max-w-[1440px] w-full mx-auto px-4 sm:px-6 py-6">
+        <div class="mb-5 flex flex-wrap items-center justify-between gap-3">
+            <div>
+                <span class="text-xs font-mono font-bold uppercase tracking-wider text-lab-800 bg-lab-100 px-2.5 py-0.5 rounded">Step 5 of 5</span>
+                <h2 class="text-xl font-extrabold text-slate-900 mt-1">AI Clinical Consultation & EHR Interoperability</h2>
+                <p class="text-xs text-slate-500">GraphRAG consultation with hallucination guardrail, structured SOAP notes, and HL7 FHIR R4 export.</p>
+            </div>
+            <a href="index.html" class="inline-flex items-center gap-2 bg-slate-900 hover:bg-slate-800 text-white px-4 py-2 rounded-lg text-xs font-semibold shadow transition">
+                &larr; Return to Step 1 (Patient Intake)
+            </a>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+            <!-- Left Column: AI Clinical Consultation Box (7 Cols) -->
+            <div class="lg:col-span-7 space-y-5">
+                <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm space-y-4">
+                    <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-3">
+                        <div>
+                            <h3 class="font-bold text-sm text-slate-900">Grounded GraphRAG Clinical Consultation</h3>
+                            <p class="text-[11px] text-slate-500">Queries are strictly grounded in retrieved Neo4j paths; unsupported claims blocked.</p>
+                        </div>
+                        <select id="llm-engine-select" class="rounded-lg border border-slate-300 bg-slate-50 px-2.5 py-1 text-xs font-mono font-bold text-slate-800">
+                            <option value="Llama 3.3 70B Instruct (NVIDIA NIM API)">Llama 3.3 70B Instruct (NVIDIA NIMs)</option>
+                            <option value="Llama 3.1 Nemotron 70B (NVIDIA NIM API)">Llama 3.1 Nemotron 70B</option>
+                            <option value="Mixtral 8x22B Instruct (NVIDIA NIM API)">Mixtral 8x22B Instruct</option>
+                            <option value="Llama 3.1 8B (Local Ollama On-Premises)">Llama 3.1 8B (Local Ollama)</option>
+                        </select>
+                    </div>
+
+                    <!-- Quick Pre-Canned Query Buttons -->
+                    <div class="flex flex-wrap gap-1.5">
+                        <button onclick="runConsultation('suitable_medicines')" class="text-xs bg-emerald-50 hover:bg-emerald-100 text-emerald-900 px-3 py-1.5 rounded-lg border border-emerald-300 font-semibold transition shadow-sm">✓ Suitable & Safe Medicines</button>
+                        <button onclick="runConsultation('alternatives')" class="text-xs bg-sky-50 hover:bg-sky-100 text-sky-900 px-3 py-1.5 rounded-lg border border-sky-300 font-semibold transition shadow-sm">⇄ Safe Alternatives for Active Rx</button>
+                        <button onclick="runConsultation('avoid_list')" class="text-xs bg-amber-50 hover:bg-amber-100 text-amber-900 px-3 py-1.5 rounded-lg border border-amber-300 font-semibold transition shadow-sm">⚠ All Drugs to Avoid / Adjust</button>
+                        <button onclick="runConsultation('genotype_summary')" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-800 px-3 py-1.5 rounded-lg border border-slate-300 font-medium transition">8-Gene Summary</button>
+                        <button onclick="runConsultation('guardrail')" class="text-xs bg-rose-50 hover:bg-rose-100 text-rose-800 px-3 py-1.5 rounded-lg border border-rose-200 font-semibold transition">🛡️ Test Hallucination Guardrail</button>
+                    </div>
+
+                    <!-- Custom Natural Language Query Form -->
+                    <form onsubmit="submitQuery(event)" class="flex flex-col sm:flex-row gap-2">
+                        <input id="custom-query-input" type="text" placeholder="Ask e.g. 'Give list of suitable medicines for this genotype', 'What can I prescribe instead of Clopidogrel?'..." class="flex-1 rounded-xl border border-slate-300 bg-slate-50 px-3.5 py-2.5 text-xs text-slate-900 focus:bg-white focus:ring-2 focus:ring-lab-600 focus:outline-none">
+                        <button type="submit" class="bg-lab-800 hover:bg-lab-900 text-white px-5 py-2.5 rounded-xl text-xs font-semibold shadow transition shrink-0">Query Knowledge Graph</button>
+                    </form>
+
+                    <!-- Answer Container -->
+                    <div id="consultation-answer-box" class="rounded-xl bg-slate-50 border border-slate-200 p-4 text-xs space-y-3 min-h-[120px]">
+                        <p class="text-slate-500 italic">Select a query prompt above or type a clinical pharmacogenomics question.</p>
+                    </div>
+
+                    <!-- Cypher Query Execution Box -->
+                    <div class="rounded-xl bg-slate-900 p-4 text-xs font-mono text-slate-300 space-y-1.5 shadow-inner">
+                        <div class="flex items-center justify-between text-[11px] text-slate-400">
+                            <span>Retrieved Cypher Traversal Provenance (Neo4j 5.x)</span>
+                            <span class="text-emerald-400 font-bold">Grounded</span>
+                        </div>
+                        <pre id="cypher-box" class="text-sky-300 whitespace-pre-wrap text-[11px] leading-relaxed">// Cypher path will be rendered here upon consultation</pre>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column: EHR Documentation & FHIR Suite (5 Cols) -->
+            <div class="lg:col-span-5 space-y-5">
+
+                <!-- Clinical SOAP Progress Note Card -->
+                <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm space-y-4">
+                    <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-3">
+                        <div>
+                            <h3 class="font-bold text-sm text-slate-900">Interactive Clinical Progress Note (SOAP)</h3>
+                            <p class="text-[11px] text-slate-500">Accredited EHR consultation documentation with verified timestamps & audit.</p>
+                        </div>
+                        <div class="flex items-center gap-1.5">
+                            <button onclick="toggleSoapView('styled')" id="soap-view-styled-btn" class="px-2.5 py-1 rounded-lg text-xs font-bold bg-lab-800 text-white shadow-sm transition">Styled View</button>
+                            <button onclick="toggleSoapView('raw')" id="soap-view-raw-btn" class="px-2.5 py-1 rounded-lg text-xs font-semibold bg-slate-100 text-slate-700 hover:bg-slate-200 transition">Raw EMR</button>
+                            <button onclick="copySoap()" class="bg-indigo-700 hover:bg-indigo-800 text-white px-3 py-1 rounded-lg text-xs font-semibold shadow-sm transition">📋 Copy Note</button>
+                            <button onclick="window.print()" class="bg-slate-800 hover:bg-slate-900 text-white px-2.5 py-1 rounded-lg text-xs font-semibold shadow-sm transition">🖨️ Print</button>
+                        </div>
+                    </div>
+
+                    <!-- Interactive Styled View Container -->
+                    <div id="soap-styled-container" class="max-h-[380px] overflow-y-auto pr-1"></div>
+
+                    <!-- Raw EMR Textarea Container (Hidden by default) -->
+                    <div id="soap-raw-container" class="hidden">
+                        <div class="max-h-[380px] overflow-y-auto bg-slate-900 rounded-xl p-3 border border-slate-800 font-mono text-[11px] text-slate-200 whitespace-pre-wrap" id="soap-preview"></div>
+                    </div>
+
+                    <div class="flex items-center justify-between pt-1 border-t border-slate-100">
+                        <span id="soap-copy-status" class="text-[11px] text-emerald-700 font-semibold block"></span>
+                        <span class="text-[10px] font-mono text-slate-400">HL7 CDA / EMR Compliant Format</span>
+                    </div>
+                </div>
+
+                <!-- HL7 FHIR R4 Bundle Export Card -->
+                <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm space-y-4">
+                    <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                        <div>
+                            <h3 class="font-bold text-sm text-slate-900">HL7 FHIR R4 Genomics Bundle</h3>
+                            <p class="text-[11px] text-slate-500">DiagnosticReport + LOINC Observations + GuidanceResponses.</p>
+                        </div>
+                        <button onclick="copyFhir()" class="bg-slate-900 hover:bg-slate-800 text-white px-3 py-1.5 rounded-lg text-xs font-semibold shadow-sm transition">Copy FHIR JSON</button>
+                    </div>
+
+                    <div class="max-h-[200px] overflow-y-auto bg-slate-950 text-emerald-400 rounded-xl p-3 font-mono text-[10.5px] whitespace-pre-wrap" id="fhir-preview"></div>
+                    <span id="fhir-copy-status" class="text-[11px] text-emerald-700 font-semibold block"></span>
+                </div>
+
+            </div>
+
+        </div>
+    </main>
+
+    <script src="shared.js"></script>
+    <script>
+        let currentSoapView = "styled";
+
+        window.onload = function() {
+            renderCommonHeader(5);
+            runConsultation('suitable_medicines');
+            renderSoapPreview();
+            renderFhirPreview();
+        };
+
+        function runConsultation(mode) {
+            let queryText = mode;
+            if (mode === 'suitable_medicines') queryText = "Give list of suitable and safe medicines for this genotype";
+            else if (mode === 'alternatives') queryText = "What are safe alternatives for active medications?";
+            else if (mode === 'avoid_list') queryText = "List all drugs to avoid or adjust due to contraindications";
+            else if (mode === 'genotype_summary') queryText = "8-Gene summary of diplotypes and metabolizer status";
+            else if (mode === 'guardrail') queryText = "Check unapproved compound ExperimentalUnapprovedCompound-99 (Hallucination Test)";
+
+            const inputEl = document.getElementById('custom-query-input');
+            if (inputEl) inputEl.value = queryText;
+
+            executeClinicalConsultation(queryText);
+        }
+
+        function submitQuery(e) {
+            e.preventDefault();
+            const inputEl = document.getElementById('custom-query-input');
+            const q = inputEl?.value || '';
+            if (!q.trim()) return;
+            executeClinicalConsultation(q);
+        }
+
+        function executeClinicalConsultation(queryText) {
+            const box = document.getElementById('consultation-answer-box');
+            const cypherBox = document.getElementById('cypher-box');
+            if (!box || !cypherBox) return;
+
+            // Use the comprehensive grounded clinical NLP engine from shared.js
+            const result = processClinicalQuery(queryText);
+
+            box.innerHTML = result.answer;
+            cypherBox.textContent = result.cypher || '// Neo4j 5.x Cypher traversal';
+        }
+
+        function renderSoapPreview() {
+            const styledEl = document.getElementById('soap-styled-container');
+            const rawEl = document.getElementById('soap-preview');
+            if (styledEl) styledEl.innerHTML = generateSoapHtml();
+            if (rawEl) rawEl.textContent = generateSoapNote();
+        }
+
+        function toggleSoapView(view) {
+            currentSoapView = view;
+            const styledContainer = document.getElementById('soap-styled-container');
+            const rawContainer = document.getElementById('soap-raw-container');
+            const styledBtn = document.getElementById('soap-view-styled-btn');
+            const rawBtn = document.getElementById('soap-view-raw-btn');
+
+            if (view === 'styled') {
+                if (styledContainer) styledContainer.classList.remove('hidden');
+                if (rawContainer) rawContainer.classList.add('hidden');
+                if (styledBtn) { styledBtn.className = "px-2.5 py-1 rounded-lg text-xs font-bold bg-lab-800 text-white shadow-sm transition"; }
+                if (rawBtn) { rawBtn.className = "px-2.5 py-1 rounded-lg text-xs font-semibold bg-slate-100 text-slate-700 hover:bg-slate-200 transition"; }
+            } else {
+                if (styledContainer) styledContainer.classList.add('hidden');
+                if (rawContainer) rawContainer.classList.remove('hidden');
+                if (styledBtn) { styledBtn.className = "px-2.5 py-1 rounded-lg text-xs font-semibold bg-slate-100 text-slate-700 hover:bg-slate-200 transition"; }
+                if (rawBtn) { rawBtn.className = "px-2.5 py-1 rounded-lg text-xs font-bold bg-lab-800 text-white shadow-sm transition"; }
+            }
+        }
+
+        function copySoap() {
+            const note = generateSoapNote();
+            navigator.clipboard.writeText(note).then(() => {
+                const statusEl = document.getElementById('soap-copy-status');
+                if (statusEl) statusEl.textContent = "✓ Copied complete clinical progress note (with audit timestamps) to clipboard!";
+                setTimeout(() => { if (statusEl) statusEl.textContent = ""; }, 3000);
+            });
+        }
+
+        function renderFhirPreview() {
+            const el = document.getElementById('fhir-preview');
+            if (el) el.textContent = JSON.stringify(generateFhirBundle(), null, 2);
+        }
+
+        function copyFhir() {
+            const bundleJson = JSON.stringify(generateFhirBundle(), null, 2);
+            navigator.clipboard.writeText(bundleJson).then(() => {
+                const statusEl = document.getElementById('fhir-copy-status');
+                if (statusEl) statusEl.textContent = "✓ Copied HL7 FHIR R4 Bundle JSON to clipboard!";
+                setTimeout(() => { if (statusEl) statusEl.textContent = ""; }, 3000);
+            });
+        }
+    </script>
+</body>
+</html>

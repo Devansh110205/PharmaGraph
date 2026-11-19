@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PharmaGraph-CDS | 3. e-Prescribing & DDGI Phenoconversion</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'], mono: ['JetBrains Mono', 'monospace'] },
+                    colors: { lab: { 50: '#f0f7ff', 100: '#e0effe', 600: '#0284c7', 700: '#0369a1', 800: '#075985', 900: '#0c4a6e', 950: '#082f49' } }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-slate-100 text-slate-800 antialiased min-h-screen flex flex-col font-sans">
+
+    <!-- Common Navigation Header (Page 3 Active) -->
+    <header id="common-portal-header"></header>
+
+    <main class="flex-1 max-w-[1440px] w-full mx-auto px-4 sm:px-6 py-6">
+        <div class="mb-5 flex flex-wrap items-center justify-between gap-3">
+            <div>
+                <span class="text-xs font-mono font-bold uppercase tracking-wider text-lab-800 bg-lab-100 px-2.5 py-0.5 rounded">Step 3 of 5</span>
+                <h2 class="text-xl font-extrabold text-slate-900 mt-1">e-Prescribing Formulary & Phenoconversion Engine</h2>
+                <p class="text-xs text-slate-500">Configure candidate medication orders, detect shared enzyme polypharmacy collisions, and check DDGI phenoconversion.</p>
+            </div>
+            <a href="cds-alerts.html" class="inline-flex items-center gap-2 bg-lab-800 hover:bg-lab-900 text-white px-4 py-2 rounded-lg text-xs font-semibold shadow transition">
+                Proceed to Decision Support (CDS) &rarr;
+            </a>
+        </div>
+
+        <!-- Polypharmacy Pathway Collision Alert Banner -->
+        <div id="polypharmacy-collision-banner" class="hidden mb-6 rounded-2xl border border-rose-300 bg-rose-50/90 p-4 shadow-sm text-xs"></div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+            <!-- Left Column: Formulary & Order Selection (7 Cols) -->
+            <div class="lg:col-span-7 space-y-5">
+                <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm space-y-4">
+                    <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                        <div>
+                            <h3 class="font-bold text-sm text-slate-900">Hospital Formulary & Candidate Medication Basket</h3>
+                            <p class="text-[11px] text-slate-500">Toggle drugs in and out of the candidate prescription regimen.</p>
+                        </div>
+                        <span id="active-order-count" class="font-mono text-xs font-bold px-2.5 py-1 rounded bg-lab-100 text-lab-900">2 Active Rx</span>
+                    </div>
+
+                    <div class="relative">
+                        <input id="formulary-search" type="text" oninput="renderFormularyCatalog()" placeholder="Search formulary by drug name, class, or gene (e.g. Clopidogrel, Statin, CYP2D6)..." class="w-full rounded-xl border border-slate-300 bg-slate-50 px-3.5 py-2 text-xs text-slate-900 focus:bg-white focus:ring-2 focus:ring-lab-600 focus:outline-none">
+                    </div>
+
+                    <div id="formulary-catalog-grid" class="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-[460px] overflow-y-auto pr-1"></div>
+                </div>
+            </div>
+
+            <!-- Right Column: Phenoconversion & TDM Lab Monitoring (5 Cols) -->
+            <div class="lg:col-span-5 space-y-5">
+
+                <!-- Phenoconversion / Drug-Drug-Gene Interaction Panel -->
+                <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm space-y-4">
+                    <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                        <div>
+                            <h3 class="font-bold text-sm text-slate-900">DDGI Phenoconversion Analyzer</h3>
+                            <p class="text-[11px] text-slate-500">Concomitant inhibitors or inducers alter effective metabolizer status in real-time.</p>
+                        </div>
+                        <span class="text-[10px] font-mono bg-amber-100 text-amber-900 px-2 py-0.5 rounded font-bold">Phenocopy</span>
+                    </div>
+
+                    <div class="space-y-3">
+                        <!-- CYP2D6 Inhibitors -->
+                        <div>
+                            <span class="text-[11px] font-bold text-slate-600 block mb-1">CYP2D6 Potent / Strong Inhibitors:</span>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5 text-xs">
+                                <label class="flex items-center gap-2 p-1.5 bg-slate-50 border rounded-lg cursor-pointer hover:bg-slate-100 transition">
+                                    <input type="checkbox" id="ddi-fluoxetine" onchange="onPhenoconversionToggle()" class="rounded text-amber-600">
+                                    <span>Fluoxetine <span class="font-mono text-[10px] text-rose-600">(Strong 2D6 inh)</span></span>
+                                </label>
+                                <label class="flex items-center gap-2 p-1.5 bg-slate-50 border rounded-lg cursor-pointer hover:bg-slate-100 transition">
+                                    <input type="checkbox" id="ddi-paroxetine" onchange="onPhenoconversionToggle()" class="rounded text-amber-600">
+                                    <span>Paroxetine <span class="font-mono text-[10px] text-rose-600">(Strong 2D6 inh)</span></span>
+                                </label>
+                                <label class="flex items-center gap-2 p-1.5 bg-slate-50 border rounded-lg cursor-pointer hover:bg-slate-100 transition">
+                                    <input type="checkbox" id="ddi-bupropion" onchange="onPhenoconversionToggle()" class="rounded text-amber-600">
+                                    <span>Bupropion <span class="font-mono text-[10px] text-rose-600">(Strong 2D6 inh)</span></span>
+                                </label>
+                                <label class="flex items-center gap-2 p-1.5 bg-slate-50 border rounded-lg cursor-pointer hover:bg-slate-100 transition">
+                                    <input type="checkbox" id="ddi-quinidine" onchange="onPhenoconversionToggle()" class="rounded text-amber-600">
+                                    <span>Quinidine <span class="font-mono text-[10px] text-rose-600">(Potent 2D6 inh)</span></span>
+                                </label>
+                                <label class="flex items-center gap-2 p-1.5 bg-slate-50 border rounded-lg cursor-pointer hover:bg-slate-100 transition">
+                                    <input type="checkbox" id="ddi-terbinafine" onchange="onPhenoconversionToggle()" class="rounded text-amber-600">
+                                    <span>Terbinafine <span class="font-mono text-[10px] text-rose-600">(Persistent 2D6 inh)</span></span>
+                                </label>
+                                <label class="flex items-center gap-2 p-1.5 bg-slate-50 border rounded-lg cursor-pointer hover:bg-slate-100 transition">
+                                    <input type="checkbox" id="ddi-duloxetine" onchange="onPhenoconversionToggle()" class="rounded text-amber-600">
+                                    <span>Duloxetine <span class="font-mono text-[10px] text-rose-600">(Moderate 2D6 inh)</span></span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- CYP2C19 & CYP2C9 Inhibitors -->
+                        <div>
+                            <span class="text-[11px] font-bold text-slate-600 block mb-1">CYP2C19 & CYP2C9 Inhibitors:</span>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5 text-xs">
+                                <label class="flex items-center gap-2 p-1.5 bg-slate-50 border rounded-lg cursor-pointer hover:bg-slate-100 transition">
+                                    <input type="checkbox" id="ddi-fluvoxamine" onchange="onPhenoconversionToggle()" class="rounded text-amber-600">
+                                    <span>Fluvoxamine <span class="font-mono text-[10px] text-rose-600">(Potent 2C19 inh)</span></span>
+                                </label>
+                                <label class="flex items-center gap-2 p-1.5 bg-slate-50 border rounded-lg cursor-pointer hover:bg-slate-100 transition">
+                                    <input type="checkbox" id="ddi-omeprazole" onchange="onPhenoconversionToggle()" class="rounded text-amber-600">
+                                    <span>Omeprazole <span class="font-mono text-[10px] text-rose-600">(2C19 blocker)</span></span>
+                                </label>
+                                <label class="flex items-center gap-2 p-1.5 bg-slate-50 border rounded-lg cursor-pointer hover:bg-slate-100 transition">
+                                    <input type="checkbox" id="ddi-fluconazole" onchange="onPhenoconversionToggle()" class="rounded text-amber-600">
+                                    <span>Fluconazole <span class="font-mono text-[10px] text-rose-600">(Potent 2C9/19 inh)</span></span>
+                                </label>
+                                <label class="flex items-center gap-2 p-1.5 bg-slate-50 border rounded-lg cursor-pointer hover:bg-slate-100 transition">
+                                    <input type="checkbox" id="ddi-amiodarone" onchange="onPhenoconversionToggle()" class="rounded text-amber-600">
+                                    <span>Amiodarone <span class="font-mono text-[10px] text-rose-600">(Potent 2C9 inh)</span></span>
+                                </label>
+                                <label class="flex items-center gap-2 p-1.5 bg-slate-50 border rounded-lg cursor-pointer hover:bg-slate-100 transition">
+                                    <input type="checkbox" id="ddi-bactrim" onchange="onPhenoconversionToggle()" class="rounded text-amber-600">
+                                    <span>TMP-SMX (Bactrim) <span class="font-mono text-[10px] text-rose-600">(2C9 inh)</span></span>
+                                </label>
+                                <label class="flex items-center gap-2 p-1.5 bg-slate-50 border rounded-lg cursor-pointer hover:bg-slate-100 transition">
+                                    <input type="checkbox" id="ddi-cyclosporine" onchange="onPhenoconversionToggle()" class="rounded text-amber-600">
+                                    <span>Cyclosporine <span class="font-mono text-[10px] text-rose-600">(OATP1B1 blocker)</span></span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Potent Hepatic Inducers -->
+                        <div>
+                            <span class="text-[11px] font-bold text-slate-600 block mb-1">Potent Microsomal Inducers:</span>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5 text-xs">
+                                <label class="flex items-center gap-2 p-1.5 bg-slate-50 border rounded-lg cursor-pointer hover:bg-slate-100 transition">
+                                    <input type="checkbox" id="ddi-rifampin" onchange="onPhenoconversionToggle()" class="rounded text-amber-600">
+                                    <span>Rifampin <span class="font-mono text-[10px] text-indigo-600">(Broad CYP Inducer)</span></span>
+                                </label>
+                                <label class="flex items-center gap-2 p-1.5 bg-slate-50 border rounded-lg cursor-pointer hover:bg-slate-100 transition">
+                                    <input type="checkbox" id="ddi-stjohns" onchange="onPhenoconversionToggle()" class="rounded text-amber-600">
+                                    <span>St. John's Wort <span class="font-mono text-[10px] text-indigo-600">(Herbal Inducer)</span></span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="phenoconversion-status-card" class="p-3.5 rounded-xl border border-slate-200 bg-slate-50 text-xs text-slate-700 leading-relaxed">
+                        No concomitant inhibitors selected. Baseline genotype dictates functional phenotype.
+                    </div>
+                </div>
+
+                <!-- Therapeutic Drug Monitoring (TDM) Prompts -->
+                <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm space-y-4">
+                    <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                        <h3 class="font-bold text-sm text-slate-900">Recommended TDM & Lab Monitoring</h3>
+                        <span class="text-[10px] font-mono text-slate-500 font-semibold">Pre-prescribing Labs</span>
+                    </div>
+
+                    <div id="tdm-monitoring-container" class="space-y-2.5 text-xs"></div>
+                </div>
+
+            </div>
+
+        </div>
+    </main>
+
+    <script src="shared.js"></script>
+    <script>
+        window.onload = function() {
+            renderCommonHeader(3);
+            renderFormularyCatalog();
+            renderPolypharmacyCollision();
+            renderTdmMonitoring();
+            restoreConcomitantCheckboxes();
+        };
+
+        function renderFormularyCatalog() {
+            const container = document.getElementById('formulary-catalog-grid');
+            const searchInput = document.getElementById('formulary-search')?.value.toLowerCase() || '';
+            const countEl = document.getElementById('active-order-count');
+            if (countEl) countEl.textContent = `${portalState.orderedDrugs.length} Active Rx`;
+            if (!container) return;
+
+            container.innerHTML = '';
+            Object.keys(FORMULARY).forEach(drugKey => {
+                const drug = FORMULARY[drugKey];
+                const isSelected = portalState.orderedDrugs.includes(drugKey);
+                const queryMatch = drug.name.toLowerCase().includes(searchInput) ||
+                                   drug.drugClass.toLowerCase().includes(searchInput) ||
+                                   drug.gene.toLowerCase().includes(searchInput);
+                if (!queryMatch) return;
+
+                const card = document.createElement('div');
+                card.className = `p-3 rounded-xl border transition cursor-pointer flex flex-col justify-between ${
+                    isSelected ? 'bg-lab-50/80 border-lab-600 ring-1 ring-lab-600' : 'bg-slate-50 border-slate-200 hover:bg-slate-100'
+                }`;
+                card.onclick = () => togglePrescriptionOrder(drugKey);
+                card.innerHTML = `
+                    <div class="flex items-start justify-between gap-1 mb-1">
+                        <div>
+                            <strong class="text-xs text-slate-900 block font-bold">${drug.name}</strong>
+                            <span class="text-[10px] text-slate-500">${drug.drugClass}</span>
+                        </div>
+                        <span class="font-mono text-[10px] font-bold px-1.5 py-0.5 rounded ${
+                            isSelected ? 'bg-lab-800 text-white' : 'bg-slate-200 text-slate-700'
+                        }">${isSelected ? '✓ ORDERED' : '+ ADD'}</span>
+                    </div>
+                    <div class="flex items-center justify-between text-[10px] font-mono pt-2 border-t border-slate-200/60 text-slate-500">
+                        <span>Pathway: <strong>${drug.gene}</strong></span>
+                        <span>${drug.rxnorm}</span>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function togglePrescriptionOrder(drugKey) {
+            const idx = portalState.orderedDrugs.indexOf(drugKey);
+            if (idx >= 0) {
+                if (portalState.orderedDrugs.length > 1) {
+                    portalState.orderedDrugs.splice(idx, 1);
+                } else {
+                    alert("At least one candidate medication must remain selected.");
+                    return;
+                }
+            } else {
+                portalState.orderedDrugs.push(drugKey);
+            }
+            saveStateToStorage();
+            renderCommonHeader(3);
+            renderFormularyCatalog();
+            renderPolypharmacyCollision();
+            renderTdmMonitoring();
+        }
+
+        function renderPolypharmacyCollision() {
+            const banner = document.getElementById('polypharmacy-collision-banner');
+            if (!banner) return;
+            const evaluations = evaluateOrderedRegimen();
+            const geneMap = {};
+            evaluations.forEach(ev => {
+                geneMap[ev.gene] = geneMap[ev.gene] || [];
+                geneMap[ev.gene].push(ev.drugName);
+            });
+
+            const collisions = Object.entries(geneMap).filter(([_, drugs]) => drugs.length > 1);
+            if (collisions.length > 0) {
+                banner.classList.remove('hidden');
+                banner.innerHTML = `
+                    <div class="flex items-start gap-3">
+                        <div class="w-8 h-8 rounded-lg bg-rose-600 text-white flex items-center justify-center font-bold text-sm shrink-0">⚠️</div>
+                        <div class="space-y-1">
+                            <strong class="font-bold text-rose-950 text-sm">Polypharmacy Collision Detected on Shared Metabolic Pathways:</strong>
+                            <p class="text-rose-900 leading-relaxed">
+                                Multiple candidate medications compete for the same biotransformation pathway:
+                                ${collisions.map(([gene, drugs]) => `<strong>${gene}</strong> (${drugs.join(' + ')})`).join(', ')}.
+                                Co-administration accelerates competitive metabolic saturation and escalates toxicity risks.
+                            </p>
+                        </div>
+                    </div>
+                `;
+            } else {
+                banner.classList.add('hidden');
+            }
+        }
+
+        function renderTdmMonitoring() {
+            const container = document.getElementById('tdm-monitoring-container');
+            if (!container) return;
+            const drugs = portalState.orderedDrugs;
+            const tdmItems = [];
+
+            if (drugs.includes('warfarin')) {
+                tdmItems.push({ drug: "Warfarin", lab: "Baseline & 48h INR", target: "INR 2.0–3.0", note: "CYP2C9/VKORC1 sensitivity dictating low initial dose" });
+            }
+            if (drugs.includes('fluorouracil') || drugs.includes('capecitabine')) {
+                tdmItems.push({ drug: "Fluorouracil / Capecitabine", lab: "Weekly CBC with Differential", target: "ANC >1,500/µL, Platelets >100k", note: "DPYD deficiency severe neutropenia & myelosuppression check" });
+            }
+            if (drugs.includes('simvastatin') || drugs.includes('atorvastatin')) {
+                tdmItems.push({ drug: "Simvastatin / Atorvastatin", lab: "Baseline ALT / Creatine Kinase", target: "CK <5x ULN", note: "SLCO1B1 transporter myopathy / rhabdomyolysis surveillance" });
+            }
+            if (drugs.includes('carbamazepine')) {
+                tdmItems.push({ drug: "Carbamazepine", lab: "Serum Level & Dermatologic Check", target: "4–12 mcg/mL", note: "Stevens-Johnson Syndrome / TEN cutaneous examination" });
+            }
+            if (drugs.includes('phenytoin')) {
+                tdmItems.push({ drug: "Phenytoin", lab: "Serum Trough Level (Total & Free)", target: "10–20 mcg/mL (Total)", note: "CYP2C9 saturation kinetics; ataxia & neurotoxicity surveillance" });
+            }
+            if (drugs.includes('azathioprine') || drugs.includes('mercaptopurine')) {
+                tdmItems.push({ drug: "Azathioprine / 6-MP", lab: "CBC with Diff + 6-TGN Metabolites", target: "ANC >1,500/µL, 6-TGN 235-450", note: "TPMT loss-of-function bone marrow failure prevention" });
+            }
+            if (drugs.includes('citalopram') || drugs.includes('escitalopram')) {
+                tdmItems.push({ drug: "Citalopram / Escitalopram", lab: "Baseline & Steady-State ECG", target: "QTc < 460 ms (M) / < 470 ms (F)", note: "CYP2C19 Poor Metabolizer elevated plasma AUC and TdP risk" });
+            }
+            if (drugs.includes('tamoxifen')) {
+                tdmItems.push({ drug: "Tamoxifen", lab: "Serum Endoxifen Concentration", target: "Endoxifen > 16 nM (5.9 ng/mL)", note: "CYP2D6 bioactivation confirmation for breast cancer recurrence prevention" });
+            }
+
+            if (tdmItems.length === 0) {
+                container.innerHTML = `<p class="text-slate-500 italic">No special TDM lab monitoring required for current regimen.</p>`;
+            } else {
+                container.innerHTML = tdmItems.map(item => `
+                    <div class="p-2.5 rounded-xl border border-slate-200 bg-slate-50 space-y-1">
+                        <div class="flex justify-between items-center font-bold text-slate-900">
+                            <span>${item.drug}</span>
+                            <span class="text-emerald-700 font-mono text-[11px]">${item.lab}</span>
+                        </div>
+                        <div class="text-[11px] text-slate-600">Target Range: <strong>${item.target}</strong></div>
+                        <div class="text-[10px] text-slate-500 italic">${item.note}</div>
+                    </div>
+                `).join('');
+            }
+        }
+
+        const DDI_CHECKBOX_IDS = [
+            { id: 'ddi-fluoxetine', name: 'Fluoxetine' },
+            { id: 'ddi-paroxetine', name: 'Paroxetine' },
+            { id: 'ddi-bupropion', name: 'Bupropion' },
+            { id: 'ddi-quinidine', name: 'Quinidine' },
+            { id: 'ddi-terbinafine', name: 'Terbinafine' },
+            { id: 'ddi-duloxetine', name: 'Duloxetine' },
+            { id: 'ddi-fluvoxamine', name: 'Fluvoxamine' },
+            { id: 'ddi-omeprazole', name: 'Omeprazole' },
+            { id: 'ddi-fluconazole', name: 'Fluconazole' },
+            { id: 'ddi-amiodarone', name: 'Amiodarone' },
+            { id: 'ddi-bactrim', name: 'TMP-SMX (Bactrim)' },
+            { id: 'ddi-cyclosporine', name: 'Cyclosporine' },
+            { id: 'ddi-rifampin', name: 'Rifampin' },
+            { id: 'ddi-stjohns', name: "St. John's Wort" }
+        ];
+
+        function onPhenoconversionToggle() {
+            portalState.concomitantMeds = DDI_CHECKBOX_IDS
+                .filter(item => document.getElementById(item.id)?.checked)
+                .map(item => item.name);
+
+            saveStateToStorage();
+            updatePhenoconversionCard();
+        }
+
+        function restoreConcomitantCheckboxes() {
+            const meds = portalState.concomitantMeds || [];
+            DDI_CHECKBOX_IDS.forEach(item => {
+                const el = document.getElementById(item.id);
+                if (el) el.checked = meds.includes(item.name);
+            });
+            updatePhenoconversionCard();
+        }
+
+        function updatePhenoconversionCard() {
+            const card = document.getElementById('phenoconversion-status-card');
+            if (!card) return;
+            const meds = portalState.concomitantMeds || [];
+            const acc = portalState.accessionData;
+
+            if (meds.length === 0) {
+                card.className = "p-3.5 rounded-xl border border-slate-200 bg-slate-50 text-xs text-slate-700 leading-relaxed";
+                card.innerHTML = "No concomitant inhibitors selected. Baseline genotype dictates functional phenotype.";
+                return;
+            }
+
+            let warnings = [];
+            const cyp2d6Inhibitors = meds.filter(m => ['Fluoxetine', 'Paroxetine', 'Bupropion', 'Quinidine', 'Terbinafine', 'Duloxetine'].includes(m));
+            if (cyp2d6Inhibitors.length > 0) {
+                const cyp2d6Base = acc.diplotypes['CYP2D6'] || '*1/*1';
+                warnings.push(`<strong>CYP2D6 Phenoconversion:</strong> Baseline genotype is <code>${cyp2d6Base}</code>. Concurrent administration of <strong>${cyp2d6Inhibitors.join(', ')}</strong> converts patient into a <strong>Phenotypic Poor Metabolizer</strong>. Codeine and Tramadol will completely fail to provide pain relief due to absent bioactivation; Tamoxifen conversion to endoxifen is blocked.`);
+            }
+
+            if (meds.includes('Fluvoxamine') || meds.includes('Omeprazole')) {
+                warnings.push(`<strong>CYP2C19 Inhibition / Competition:</strong> Concurrent ${meds.filter(m => m === 'Fluvoxamine' || m === 'Omeprazole').join(' + ')} reduces Clopidogrel active metabolite formation by >40% (stent thrombosis risk) and causes 2-fold elevation in Sertraline / Citalopram plasma concentrations.`);
+            }
+
+            if (meds.includes('Amiodarone') || meds.includes('Fluconazole') || meds.includes('TMP-SMX (Bactrim)')) {
+                warnings.push(`<strong>CYP2C9 Inhibition (Bleeding & Toxicity Alert):</strong> Concurrent ${meds.filter(m => ['Amiodarone', 'Fluconazole', 'TMP-SMX (Bactrim)'].includes(m)).join(', ')} causes profound suppression of S-warfarin clearance (elevating INR with severe hemorrhage risk) and causes toxic Phenytoin accumulation.`);
+            }
+
+            if (meds.includes('Cyclosporine')) {
+                warnings.push(`<strong>SLCO1B1 / OATP1B1 Transporter Blockade:</strong> Cyclosporine increases Simvastatin & Rosuvastatin plasma AUC by >300%, markedly escalating risk of acute rhabdomyolysis and renal shutdown.`);
+            }
+
+            if (meds.includes('Rifampin') || meds.includes("St. John's Wort")) {
+                warnings.push(`<strong>Broad Hepatic CYP Induction:</strong> Concurrent ${meds.filter(m => m === 'Rifampin' || m === "St. John's Wort").join(' + ')} stimulates massive PXR/CYP induction, causing catastrophic therapeutic failure of Warfarin (subtherapeutic INR) and immunosuppressants.`);
+            }
+
+            card.className = "p-3.5 rounded-xl border border-rose-300 bg-rose-50 text-xs text-rose-950 space-y-1.5 leading-relaxed";
+            card.innerHTML = `
+                <div class="flex items-center justify-between pb-1 border-b border-rose-200">
+                    <strong class="font-bold text-rose-900">⚠️ Active Phenoconversion Conflicts Detected (${meds.length} Co-medications):</strong>
+                    <span class="text-[10px] font-mono bg-rose-200 text-rose-900 px-2 py-0.5 rounded font-bold">Phenocopy Alert</span>
+                </div>
+                <ul class="list-disc pl-4 space-y-1 text-[11.5px]">${warnings.map(w => `<li>${w}</li>`).join('')}</ul>
+            `;
+        }
+    </script>
+</body>
+</html>

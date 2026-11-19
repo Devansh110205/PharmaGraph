@@ -1,0 +1,82 @@
+[
+  {
+    "filename": "ACC_2026_8841_SAS.vcf",
+    "accession": "ACC-2026-8841",
+    "patient_id": "PT-IND-9042",
+    "ancestry": "South Asian",
+    "condition": "Acute Coronary Syndrome (Post-PCI) & Major Depressive Disorder",
+    "key_risk": "Clopidogrel resistance (Stent thrombosis risk) due to CYP2C19 *2/*2",
+    "recommended_tests": [
+      "Clopidogrel (verify Critical Avoid)",
+      "Prasugrel/Ticagrelor (verify Safe)",
+      "Sertraline (verify 50% Dose Reduction)"
+    ],
+    "download_url": "/api/vcf/download/ACC_2026_8841_SAS.vcf"
+  },
+  {
+    "filename": "ACC_2026_8842_EAS.vcf",
+    "accession": "ACC-2026-8842",
+    "patient_id": "PT-EAS-4418",
+    "ancestry": "East Asian",
+    "condition": "Focal Seizures & Atrial Fibrillation (Anticoagulation)",
+    "key_risk": "Carbamazepine Stevens-Johnson Syndrome (HLA-B*15:02 Pos) & Severe Warfarin bleeding risk (CYP2C9 *3/*3 + VKORC1 A/A)",
+    "recommended_tests": [
+      "Carbamazepine (verify Critical Contraindicated -> Switch Levetiracetam)",
+      "Warfarin (verify Major Dose Reduction)"
+    ],
+    "download_url": "/api/vcf/download/ACC_2026_8842_EAS.vcf"
+  },
+  {
+    "filename": "ACC_2026_8843_EUR.vcf",
+    "accession": "ACC-2026-8843",
+    "patient_id": "PT-EUR-7105",
+    "ancestry": "European",
+    "condition": "Stage III Colorectal Adenocarcinoma & Post-Surgical Cancer Pain",
+    "key_risk": "Severe/fatal 5-FU/Capecitabine toxicity (DPYD *1/*2A) & Rapid Morphine overdose toxicity (CYP2D6 *1/*1xN Ultrarapid)",
+    "recommended_tests": [
+      "Fluorouracil/Capecitabine (verify 50% Dose Reduction)",
+      "Codeine/Tramadol (verify Avoid due to Ultrarapid conversion)"
+    ],
+    "download_url": "/api/vcf/download/ACC_2026_8843_EUR.vcf"
+  },
+  {
+    "filename": "ACC_2026_8844_AFR.vcf",
+    "accession": "ACC-2026-8844",
+    "patient_id": "PT-AFR-3390",
+    "ancestry": "African",
+    "condition": "Hypercholesterolemia & Generalized Anxiety Disorder",
+    "key_risk": "Simvastatin-induced Rhabdomyolysis (+221% statin AUC due to SLCO1B1 *5/*5) & Rapid SSRI clearance (CYP2C19 *17/*17)",
+    "recommended_tests": [
+      "Simvastatin (verify Critical Avoid -> Switch Rosuvastatin <=20mg)",
+      "Sertraline/Citalopram (verify Ultrarapid Metabolism)"
+    ],
+    "download_url": "/api/vcf/download/ACC_2026_8844_AFR.vcf"
+  },
+  {
+    "filename": "ACC_2026_8845_MULTI.vcf",
+    "accession": "ACC-2026-8845",
+    "patient_id": "PT-CUS-9901",
+    "ancestry": "Multi-ethnic / Admixed",
+    "condition": "Triple-Vessel CAD, Neuropathic Pain & Dyslipidemia (Polypharmacy Collision)",
+    "key_risk": "Multi-gene collisions: Clopidogrel resistance (CYP2C19 *2/*2), Codeine inefficacy (CYP2D6 *4/*4 PM), Simvastatin toxicity (SLCO1B1 *1/*5)",
+    "recommended_tests": [
+      "Clopidogrel + Codeine + Simvastatin (verify Multi-Gene Alert Collision)"
+    ],
+    "download_url": "/api/vcf/download/ACC_2026_8845_MULTI.vcf"
+  },
+  {
+    "filename": "BENCHMARK_CONTROL_WT.vcf",
+    "accession": "REF-1000G-NA12878",
+    "patient_id": "NA12878 / HG001",
+    "ancestry": "CEU (Utah Residents with Northern/Western European Ancestry)",
+    "condition": "Genome in a Bottle (GIAB) / 1000 Genomes Reference Normal Control",
+    "key_risk": "No high-risk PGx actionable loss-of-function variants. All 8 panel genes display normal wild-type activity.",
+    "recommended_tests": [
+      "Clopidogrel (verify Safe 75mg)",
+      "Simvastatin (verify Safe)",
+      "Warfarin (verify Standard)",
+      "Fluorouracil (verify Standard)"
+    ],
+    "download_url": "/api/vcf/download/BENCHMARK_CONTROL_WT.vcf"
+  }
+]

@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PharmaGraph-CDS | 1. Patient Intake & VCF Genotyping</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'], mono: ['JetBrains Mono', 'monospace'] },
+                    colors: { lab: { 50: '#f0f7ff', 100: '#e0effe', 600: '#0284c7', 700: '#0369a1', 800: '#075985', 900: '#0c4a6e', 950: '#082f49' } }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-slate-100 text-slate-800 antialiased min-h-screen flex flex-col font-sans">
+
+    <!-- Common Navigation Header (Page 1 Active) -->
+    <header id="common-portal-header"></header>
+
+    <!-- Main Content -->
+    <main class="flex-1 max-w-[1440px] w-full mx-auto px-4 sm:px-6 py-6">
+        <div class="mb-5 flex flex-wrap items-center justify-between gap-3">
+            <div>
+                <span class="text-xs font-mono font-bold uppercase tracking-wider text-lab-800 bg-lab-100 px-2.5 py-0.5 rounded">Step 1 of 5</span>
+                <h2 class="text-xl font-extrabold text-slate-900 mt-1">Patient Clinical Intake & Genotype VCF Ingestion</h2>
+                <p class="text-xs text-slate-500">Select an existing clinical accession or ingest patient sequencing VCF file (GRCh37/GRCh38).</p>
+            </div>
+            <a href="pharmacogenes.html" class="inline-flex items-center gap-2 bg-lab-800 hover:bg-lab-900 text-white px-4 py-2 rounded-lg text-xs font-semibold shadow transition">
+                Proceed to 8-Gene Assay Profile &rarr;
+            </a>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+            <!-- Left Column: Patient Requisition & Accession -->
+            <div class="lg:col-span-5 space-y-5">
+                <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm space-y-4">
+                    <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                        <h3 class="font-bold text-sm text-slate-900">Clinical Specimen Requisition</h3>
+                        <span class="text-[11px] font-mono text-slate-400">ISO-15189 Compliant</span>
+                    </div>
+
+                    <div class="space-y-1">
+                        <label class="block text-xs font-bold text-slate-700">Quick Select Benchmark Case:</label>
+                        <select id="accession-select" onchange="onSelectAccession(this.value)" class="w-full rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-900 focus:bg-white focus:ring-2 focus:ring-lab-600 focus:outline-none">
+                            <option value="ACC-2026-8841">ACC-2026-8841 [South Asian · CYP2C19 *2/*2 Poor Metabolizer]</option>
+                            <option value="ACC-2026-8842">ACC-2026-8842 [East Asian · HLA-B *15:02 Pos & CYP2C9 *3/*3]</option>
+                            <option value="ACC-2026-8843">ACC-2026-8843 [European · CYP2D6 *1/*1xN Ultrarapid & DPYD *1/*2A]</option>
+                            <option value="ACC-2026-8844">ACC-2026-8844 [African · CYP2C19 *17/*17 Ultrarapid & SLCO1B1 *5/*5]</option>
+                            <option value="ACC-2026-8845">ACC-2026-8845 [Multi-ethnic · Polypharmacy Clopidogrel + Codeine + Statin]</option>
+                            <option value="REF-1000G-NA12878">REF-1000G-NA12878 [GIAB Control · Normal Wild-Type *1/*1 Panel]</option>
+                        </select>
+                    </div>
+
+                    <!-- Dynamic Requisition Card -->
+                    <div id="requisition-card" class="rounded-xl border border-slate-200 bg-slate-50/80 p-4 space-y-3 text-xs"></div>
+
+                    <div class="pt-2 border-t border-slate-100">
+                        <button onclick="openStarAlleleModal()" class="w-full text-center bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold py-2 px-3 rounded-lg text-xs transition border border-slate-300">
+                            ✏️ Manually Review / Override 8-Gene Star Alleles
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Guidance Notice -->
+                <div class="bg-amber-50 border border-amber-200 rounded-2xl p-4 text-xs text-amber-900 space-y-1">
+                    <strong class="font-bold flex items-center gap-1.5">
+                        <svg class="w-4 h-4 text-amber-700" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path></svg>
+                        Clinical Decision Support Disclaimer
+                    </strong>
+                    <p class="leading-relaxed text-[11px] text-amber-800">
+                        PharmaGraph-CDS is an investigational clinical decision support prototype (Research Use Only).
+                        Results must be corroborated with validated clinical diagnostics prior to making prescribing modifications.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Right Column: VCF Ingestion & Benchmark Library -->
+            <div class="lg:col-span-7 space-y-5">
+                <!-- VCF Upload Dropzone -->
+                <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm space-y-4">
+                    <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                        <h3 class="font-bold text-sm text-slate-900">Ingest Patient Genomic VCF File</h3>
+                        <span class="text-[11px] font-mono text-emerald-700 font-semibold">PharmCAT v2.15 Compatible</span>
+                    </div>
+
+                    <div class="border-2 border-dashed border-slate-300 rounded-xl p-6 text-center hover:bg-slate-50 transition cursor-pointer relative">
+                        <input type="file" id="vcf-file-input" accept=".vcf,.txt" onchange="handleVcfUpload(event)" class="absolute inset-0 opacity-0 cursor-pointer w-full h-full">
+                        <div class="space-y-2">
+                            <div class="w-10 h-10 mx-auto rounded-full bg-lab-100 text-lab-800 flex items-center justify-center font-bold text-lg">🧬</div>
+                            <div class="text-xs font-semibold text-slate-700">Drop patient VCF file here or <span class="text-lab-800 underline">Browse Local Drive</span></div>
+                            <p class="text-[10px] text-slate-400">Accepts standard GRCh37 / GRCh38 phased or unphased .vcf files</p>
+                        </div>
+                    </div>
+
+                    <!-- Ingestion Feedback Container -->
+                    <div id="vcf-feedback" class="hidden rounded-xl border border-emerald-300 bg-emerald-50 p-4 text-xs text-emerald-950 space-y-1"></div>
+                </div>
+
+                <!-- Pre-Packaged Specimen Callsets Gallery -->
+                <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm space-y-4">
+                    <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                        <div>
+                            <h3 class="font-bold text-sm text-slate-900">Pre-Packaged 1000 Genomes & GIAB Specimen Callsets</h3>
+                            <p class="text-[11px] text-slate-500">Benchmark callsets covering major global populations for validation.</p>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+                        <div class="p-3 rounded-xl border border-slate-200 bg-slate-50 flex flex-col justify-between space-y-2">
+                            <div>
+                                <div class="flex items-center justify-between">
+                                    <strong class="font-mono text-slate-900">ACC_2026_8841_SAS.vcf</strong>
+                                    <span class="px-1.5 py-0.5 rounded text-[10px] bg-sky-100 text-sky-800 font-bold">South Asian</span>
+                                </div>
+                                <p class="text-[11px] text-slate-600 mt-1">CYP2C19 *2/*2 (Clopidogrel resistance) + Sertraline dose reduction.</p>
+                            </div>
+                            <div class="flex gap-2 pt-1 border-t border-slate-200">
+                                <button onclick="loadSampleDirect('ACC_2026_8841_SAS.vcf')" class="flex-1 bg-lab-800 hover:bg-lab-900 text-white py-1 px-2 rounded font-semibold text-[11px]">⚡ Load Specimen</button>
+                                <a href="/api/vcf/download/ACC_2026_8841_SAS.vcf" download class="bg-white border hover:bg-slate-100 text-slate-700 py-1 px-2 rounded font-semibold text-[11px]">⬇ Download</a>
+                            </div>
+                        </div>
+
+                        <div class="p-3 rounded-xl border border-slate-200 bg-slate-50 flex flex-col justify-between space-y-2">
+                            <div>
+                                <div class="flex items-center justify-between">
+                                    <strong class="font-mono text-slate-900">ACC_2026_8842_EAS.vcf</strong>
+                                    <span class="px-1.5 py-0.5 rounded text-[10px] bg-rose-100 text-rose-800 font-bold">East Asian</span>
+                                </div>
+                                <p class="text-[11px] text-slate-600 mt-1">HLA-B*15:02 Pos (Carbamazepine SJS) & CYP2C9 *3/*3 + VKORC1 A/A (Warfarin bleed).</p>
+                            </div>
+                            <div class="flex gap-2 pt-1 border-t border-slate-200">
+                                <button onclick="loadSampleDirect('ACC_2026_8842_EAS.vcf')" class="flex-1 bg-lab-800 hover:bg-lab-900 text-white py-1 px-2 rounded font-semibold text-[11px]">⚡ Load Specimen</button>
+                                <a href="/api/vcf/download/ACC_2026_8842_EAS.vcf" download class="bg-white border hover:bg-slate-100 text-slate-700 py-1 px-2 rounded font-semibold text-[11px]">⬇ Download</a>
+                            </div>
+                        </div>
+
+                        <div class="p-3 rounded-xl border border-slate-200 bg-slate-50 flex flex-col justify-between space-y-2">
+                            <div>
+                                <div class="flex items-center justify-between">
+                                    <strong class="font-mono text-slate-900">ACC_2026_8843_EUR.vcf</strong>
+                                    <span class="px-1.5 py-0.5 rounded text-[10px] bg-indigo-100 text-indigo-800 font-bold">European</span>
+                                </div>
+                                <p class="text-[11px] text-slate-600 mt-1">CYP2D6 *1/*1xN (Fatal Codeine toxicity) & DPYD *1/*2A (Fatal 5-FU toxicity).</p>
+                            </div>
+                            <div class="flex gap-2 pt-1 border-t border-slate-200">
+                                <button onclick="loadSampleDirect('ACC_2026_8843_EUR.vcf')" class="flex-1 bg-lab-800 hover:bg-lab-900 text-white py-1 px-2 rounded font-semibold text-[11px]">⚡ Load Specimen</button>
+                                <a href="/api/vcf/download/ACC_2026_8843_EUR.vcf" download class="bg-white border hover:bg-slate-100 text-slate-700 py-1 px-2 rounded font-semibold text-[11px]">⬇ Download</a>
+                            </div>
+                        </div>
+
+                        <div class="p-3 rounded-xl border border-slate-200 bg-slate-50 flex flex-col justify-between space-y-2">
+                            <div>
+                                <div class="flex items-center justify-between">
+                                    <strong class="font-mono text-slate-900">ACC_2026_8844_AFR.vcf</strong>
+                                    <span class="px-1.5 py-0.5 rounded text-[10px] bg-amber-100 text-amber-800 font-bold">African</span>
+                                </div>
+                                <p class="text-[11px] text-slate-600 mt-1">SLCO1B1 *5/*5 (Simvastatin rhabdomyolysis) & CYP2C19 *17/*17 (SSRI rapid clearance).</p>
+                            </div>
+                            <div class="flex gap-2 pt-1 border-t border-slate-200">
+                                <button onclick="loadSampleDirect('ACC_2026_8844_AFR.vcf')" class="flex-1 bg-lab-800 hover:bg-lab-900 text-white py-1 px-2 rounded font-semibold text-[11px]">⚡ Load Specimen</button>
+                                <a href="/api/vcf/download/ACC_2026_8844_AFR.vcf" download class="bg-white border hover:bg-slate-100 text-slate-700 py-1 px-2 rounded font-semibold text-[11px]">⬇ Download</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Star Alleles Manual Override Modal -->
+    <div id="star-allele-modal" class="fixed inset-0 z-50 hidden bg-slate-900/75 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-2xl w-full border border-slate-200 shadow-2xl overflow-hidden flex flex-col max-h-[85vh]">
+            <div class="px-6 py-4 bg-slate-900 text-white flex items-center justify-between">
+                <div>
+                    <h3 class="font-bold text-sm">Pharmacogene Star-Allele Editor</h3>
+                    <p class="text-[11px] text-slate-400">Override individual diplotype calls for active accession.</p>
+                </div>
+                <button onclick="closeStarAlleleModal()" class="text-slate-400 hover:text-white text-xl font-bold">&times;</button>
+            </div>
+            <div id="allele-selectors-grid" class="p-6 overflow-y-auto grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs"></div>
+            <div class="px-6 py-3 bg-slate-100 border-t border-slate-200 flex justify-end">
+                <button onclick="closeStarAlleleModal()" class="bg-lab-800 hover:bg-lab-900 text-white px-4 py-1.5 rounded-lg text-xs font-semibold">Done</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="shared.js"></script>
+    <script>
+        window.onload = function() {
+            renderCommonHeader(1);
+            renderRequisition();
+            syncSelectDropdown();
+        };
+
+        function syncSelectDropdown() {
+            const sel = document.getElementById('accession-select');
+            if (sel && portalState.activeAccessionKey) {
+                sel.value = portalState.activeAccessionKey;
+            }
+        }
+
+        function onSelectAccession(accKey) {
+            setAccession(accKey);
+            renderCommonHeader(1);
+            renderRequisition();
+        }
+
+        function renderRequisition() {
+            const acc = portalState.accessionData;
+            const container = document.getElementById('requisition-card');
+            if (!container) return;
+            container.innerHTML = `
+                <div class="grid grid-cols-2 gap-2 border-b border-slate-200 pb-2">
+                    <div><span class="text-[10px] uppercase text-slate-400 block font-mono">Accession No</span><strong class="font-mono text-slate-900 text-xs">${acc.accessionNo}</strong></div>
+                    <div><span class="text-[10px] uppercase text-slate-400 block font-mono">Medical Record ID</span><strong class="font-mono text-slate-900 text-xs">${acc.patientId}</strong></div>
+                </div>
+                <div class="grid grid-cols-2 gap-2 border-b border-slate-200 pb-2">
+                    <div><span class="text-[10px] uppercase text-slate-400 block font-mono">Demographics</span><strong class="text-slate-800 text-xs">${acc.ageSex}</strong></div>
+                    <div><span class="text-[10px] uppercase text-slate-400 block font-mono">Reported Ancestry</span><span class="px-2 py-0.5 rounded text-[11px] font-bold bg-lab-100 text-lab-900">${acc.ancestry}</span></div>
+                </div>
+                <div class="space-y-1 text-slate-700 text-[11px]">
+                    <div><strong>Clinical Indication:</strong> ${acc.condition}</div>
+                    <div><strong>Referring Service:</strong> ${acc.department} (${acc.physician})</div>
+                    <div><strong>Assay Timestamp:</strong> <span class="font-mono text-[10px] text-slate-500">${acc.verifiedDate}</span></div>
+                </div>
+            `;
+        }
+
+        function handleVcfUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const text = e.target.result;
+                const parsed = parseVcfText(text, file.name);
+                showVcfFeedback(parsed);
+                renderCommonHeader(1);
+                renderRequisition();
+            };
+            reader.readAsText(file);
+        }
+
+        async function loadSampleDirect(filename) {
+            try {
+                const res = await fetch(`/api/vcf/download/${filename}`);
+                if (!res.ok) throw new Error("Could not download sample from server");
+                const text = await res.text();
+                const parsed = parseVcfText(text, filename);
+                showVcfFeedback(parsed);
+                renderCommonHeader(1);
+                renderRequisition();
+            } catch (err) {
+                alert("Error loading sample: " + err.message);
+            }
+        }
+
+        function showVcfFeedback(parsed) {
+            const fb = document.getElementById('vcf-feedback');
+            if (!fb) return;
+            fb.classList.remove('hidden');
+            fb.innerHTML = `
+                <div class="flex items-center justify-between font-bold text-emerald-950 mb-1">
+                    <span>✓ VCF Ingestion & Translation Successful</span>
+                    <span class="font-mono text-[10px] px-2 py-0.5 rounded bg-emerald-200">${parsed.detectedBuild}</span>
+                </div>
+                <div class="text-[11px] text-emerald-900 space-y-0.5">
+                    <div><strong>Sample Identifier:</strong> <code class="font-mono">${parsed.sampleId}</code> (${parsed.totalVariants.toLocaleString()} total variant lines parsed)</div>
+                    <div><strong>PGx Loci Resolved:</strong> ${parsed.pgxMatches} actionable pharmacogenes called via PharmVar v6.1 / CPIC guidelines.</div>
+                </div>
+            `;
+        }
+
+        function openStarAlleleModal() {
+            const grid = document.getElementById('allele-selectors-grid');
+            if (!grid) return;
+            grid.innerHTML = Object.keys(GENE_PANEL).map(gene => {
+                const currentVal = portalState.accessionData.diplotypes[gene] || "*1/*1";
+                const standardAlleles = Object.keys(GENE_PANEL[gene].alleles);
+                if (!standardAlleles.includes(currentVal)) standardAlleles.unshift(currentVal);
+                return `
+                    <div class="p-3 bg-slate-50 border rounded-xl">
+                        <span class="font-mono font-bold text-xs">${gene}</span>
+                        <select onchange="portalState.accessionData.diplotypes['${gene}'] = this.value; saveStateToStorage(); renderCommonHeader(1);" class="w-full mt-1.5 rounded border bg-white p-1.5 text-xs font-mono">
+                            ${standardAlleles.map(d => `<option value="${d}" ${currentVal === d ? 'selected' : ''}>${d}</option>`).join('')}
+                        </select>
+                    </div>
+                `;
+            }).join('');
+            document.getElementById('star-allele-modal')?.classList.remove('hidden');
+        }
+
+        function closeStarAlleleModal() {
+            document.getElementById('star-allele-modal')?.classList.add('hidden');
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,20 @@
+##fileformat=VCFv4.2
+##fileDate=20261021
+##source=PharmCAT_v2.15_Preprocessed_VCF_Benchmark_Callset
+##reference=GRCh38.p14
+##SAMPLE=<ID=ACC_2026_8845_MULTI,Accession=ACC-2026-8845,PatientID=PT-CUS-9901,Ancestry=Multi-ethnic / Admixed>
+##INFO=<ID=PX,Number=1,Type=String,Description="Pharmacogene HGNC Symbol">
+##INFO=<ID=GENE,Number=1,Type=String,Description="HGNC Gene Symbol">
+##INFO=<ID=ALLELE,Number=1,Type=String,Description="PharmVar v6.1 Star Allele Call">
+##INFO=<ID=SCORE,Number=1,Type=Float,Description="CPIC Gene Activity Score">
+##INFO=<ID=PHENOTYPE,Number=1,Type=String,Description="Predicted Metabolizer or Function Phenotype">
+##FORMAT=<ID=GT,Number=1,Type=String,Description="Phased Genotype Call (0/0, 0/1, 1/1)">
+#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	ACC_2026_8845_MULTI
+chr10	94781859	rs4244285	G	A	99	PASS	PX=CYP2C19;GENE=CYP2C19;ALLELE=*2/*2_Poor_Metabolizer;SCORE=0.0;PHENOTYPE=Poor_Metabolizer	GT	1|1
+chr22	42128945	rs3892097	C	T	99	PASS	PX=CYP2D6;GENE=CYP2D6;ALLELE=*4/*4_Poor_Metabolizer;SCORE=0.0;PHENOTYPE=Poor_Metabolizer	GT	1|1
+chr12	21178615	rs4149056	T	C	99	PASS	PX=SLCO1B1;GENE=SLCO1B1;ALLELE=*1/*5_Intermediate_Function;SCORE=1.0;PHENOTYPE=Intermediate_Function	GT	0|1
+chr10	94981296	rs1057910	A	C	99	PASS	PX=CYP2C9;GENE=CYP2C9;ALLELE=*1/*3_Intermediate_Metabolizer;SCORE=1.0;PHENOTYPE=Intermediate_Metabolizer	GT	0|1
+chr16	31096368	rs9923231	C	T	99	PASS	PX=VKORC1;GENE=VKORC1;ALLELE=G/A_Intermediate_Sensitivity;PHENOTYPE=Intermediate_Sensitivity	GT	0|1
+chr1	97450058	rs3918290	C	T	99	PASS	PX=DPYD;GENE=DPYD;ALLELE=*1/*1_Normal_Metabolizer;SCORE=2.0;PHENOTYPE=Normal_Metabolizer	GT	0|0
+chr6	31356450	rs3909184	C	T	99	PASS	PX=HLA-B;GENE=HLA-B;ALLELE=*15:02_Negative;PHENOTYPE=Normal_Risk	GT	0|0
+chr6	18130918	rs1142345	T	C	99	PASS	PX=TPMT;GENE=TPMT;ALLELE=*1/*1_Normal_Metabolizer;SCORE=2.0;PHENOTYPE=Normal_Metabolizer	GT	0|0
